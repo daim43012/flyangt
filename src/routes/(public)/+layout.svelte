@@ -1,12 +1,14 @@
 <script >
   import Header from '../../components/Header.svelte';
   import Footer from '../../components/Footer.svelte';
+  import FlyingPlanes from '../../components/FlyingPlanes.svelte';
 </script>
 
 <div class="public-layout">
   <Header />
 
   <main class="public-content">
+    <FlyingPlanes />
     <slot />
   </main>
 
