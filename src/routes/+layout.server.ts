@@ -1,15 +1,5 @@
-import type { LayoutServerLoad } from './$types';
-import { verifyJwt } from '$lib/jwt';
+import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async ({ cookies }) => {
-  const token = cookies.get('auth_token');
-  if (!token) return { user: null };
-
-  try {
-    const user = await verifyJwt(token);
-    return { user };
-  } catch {
-    cookies.delete('auth_token', { path: '/' });
-    return { user: null };
-  }
+export const load: LayoutServerLoad = async ({ locals }) => {
+  return { user: locals.user };
 };
