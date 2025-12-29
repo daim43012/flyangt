@@ -64,6 +64,19 @@
           <span class="nav-underline"></span>
         </a>
       {/each}
+      {#if $page.data?.user}
+        <a class="user-pill" href="/app/dashboard" aria-label="Go to dashboard">
+          <span class="avatar" aria-hidden="true">
+            {String($page.data.user.email ?? "U").slice(0, 1)}
+          </span>
+          <span class="user-meta">
+            <span class="user-kicker">SIGNED IN</span>
+            <span class="user-email">{String($page.data.user.email)}</span>
+          </span>
+        </a>
+      {:else}
+        <a class="login-btn" href="/login">Login</a>
+      {/if}
     </nav>
 
     <!-- Mobile burger -->
@@ -119,6 +132,7 @@
     </div>
   {/if}
 </header>
+
 <style>
   .header {
     position: sticky;
@@ -133,11 +147,110 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background:
-      radial-gradient(900px 200px at 25% 0%, rgba(37, 99, 235, 0.16), transparent 55%),
-      radial-gradient(700px 200px at 75% 0%, rgba(99, 102, 241, 0.12), transparent 55%);
+    background: radial-gradient(
+        900px 200px at 25% 0%,
+        rgba(37, 99, 235, 0.16),
+        transparent 55%
+      ),
+      radial-gradient(
+        700px 200px at 75% 0%,
+        rgba(99, 102, 241, 0.12),
+        transparent 55%
+      );
     filter: blur(6px);
     opacity: 0.9;
+  }
+  .login-btn {
+    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.88);
+    color: #0f172a;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .login-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(37, 99, 235, 0.12);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
+  }
+
+  .user-pill {
+    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    color: #0f172a;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+    max-width: 320px;
+  }
+
+  .user-pill:hover {
+    transform: translateY(-1px);
+    background: rgba(37, 99, 235, 0.12);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: #0f172a;
+    background: radial-gradient(
+        10px 10px at 30% 30%,
+        rgba(255, 255, 255, 0.9),
+        rgba(255, 255, 255, 0)
+      ),
+      rgba(37, 99, 235, 0.16);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+  }
+
+  .user-meta {
+    display: grid;
+    line-height: 1.1;
+    min-width: 0;
+  }
+
+  .user-kicker {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 900;
+  }
+
+  .user-email {
+    font-size: 12px;
+    color: #0f172a;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .container {
@@ -153,7 +266,7 @@
 
   .logo {
     font-weight: 900;
-    letter-spacing: 0.10em;
+    letter-spacing: 0.1em;
     font-size: 14px;
     text-transform: uppercase;
     font-style: italic;
@@ -177,7 +290,11 @@
     text-decoration: none;
     color: #475569;
     font-size: 13px;
-    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    transition:
+      transform 0.18s ease,
+      background 0.18s ease,
+      color 0.18s ease,
+      box-shadow 0.18s ease;
   }
 
   .nav-underline {
@@ -189,13 +306,15 @@
     border-radius: 999px;
     background: linear-gradient(
       90deg,
-      rgba(37, 99, 235, 0.0),
+      rgba(37, 99, 235, 0),
       rgba(37, 99, 235, 0.85),
-      rgba(79, 70, 229, 0.0)
+      rgba(79, 70, 229, 0)
     );
     transform: scaleX(0);
     opacity: 0;
-    transition: transform 0.22s ease, opacity 0.22s ease;
+    transition:
+      transform 0.22s ease,
+      opacity 0.22s ease;
   }
 
   .nav-link:hover {
@@ -229,7 +348,7 @@
     height: 44px;
     border-radius: 12px;
     border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #fff;           /* ✅ непрозрачный */
+    background: #fff; /* ✅ непрозрачный */
     cursor: pointer;
     position: relative;
     padding: 0;
@@ -243,15 +362,32 @@
     height: 2px;
     border-radius: 999px;
     background: #0f172a;
-    transition: transform 0.2s ease, top 0.2s ease, opacity 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      top 0.2s ease,
+      opacity 0.2s ease;
   }
-  .burger span:nth-child(1) { top: 15px; }
-  .burger span:nth-child(2) { top: 21px; }
-  .burger span:nth-child(3) { top: 27px; }
+  .burger span:nth-child(1) {
+    top: 15px;
+  }
+  .burger span:nth-child(2) {
+    top: 21px;
+  }
+  .burger span:nth-child(3) {
+    top: 27px;
+  }
 
-  .burger span.open:nth-child(1) { top: 21px; transform: rotate(45deg); }
-  .burger span.open:nth-child(2) { opacity: 0; }
-  .burger span.open:nth-child(3) { top: 21px; transform: rotate(-45deg); }
+  .burger span.open:nth-child(1) {
+    top: 21px;
+    transform: rotate(45deg);
+  }
+  .burger span.open:nth-child(2) {
+    opacity: 0;
+  }
+  .burger span.open:nth-child(3) {
+    top: 21px;
+    transform: rotate(-45deg);
+  }
 
   /* Overlay */
   .overlay {
@@ -263,7 +399,7 @@
   .backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(2, 6, 23, 0.62);  /* ✅ темно */
+    background: rgba(2, 6, 23, 0.62); /* ✅ темно */
     /* ✅ blur только на фоне, но он не влияет на drawer */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -280,10 +416,10 @@
     height: 100%;
     width: min(360px, 86vw);
 
-    background: #ffffff !important;   /* ✅ железно */
-    opacity: 1 !important;            /* ✅ на всякий */
-    isolation: isolate;               /* ✅ отдельный слой */
-    transform: translateZ(0);         /* ✅ форс GPU слой */
+    background: #ffffff !important; /* ✅ железно */
+    opacity: 1 !important; /* ✅ на всякий */
+    isolation: isolate; /* ✅ отдельный слой */
+    transform: translateZ(0); /* ✅ форс GPU слой */
 
     border-left: 1px solid rgba(15, 23, 42, 0.12);
     box-shadow: -24px 0 70px rgba(2, 6, 23, 0.35);
@@ -296,8 +432,14 @@
   }
 
   @keyframes slideIn {
-    from { transform: translateX(14px); opacity: 0.7; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(14px);
+      opacity: 0.7;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 
   .drawer-top {
@@ -322,7 +464,7 @@
     height: 40px;
     border-radius: 14px;
     border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #ffffff;            /* ✅ непрозрачный */
+    background: #ffffff; /* ✅ непрозрачный */
     cursor: pointer;
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
   }
@@ -336,8 +478,8 @@
   .drawer-link {
     padding: 13px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    background: #f8fafc;            /* ✅ плотный */
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: #f8fafc; /* ✅ плотный */
     color: #0f172a;
     text-decoration: none;
     font-weight: 900;
@@ -359,9 +501,16 @@
   }
 
   @media (max-width: 860px) {
-    .nav { display: none; }
-    .burger { display: inline-block; }
-    .container { padding: 18px 16px; min-height: 72px; }
+    .nav {
+      display: none;
+    }
+    .burger {
+      display: inline-block;
+    }
+    .container {
+      padding: 18px 16px;
+      min-height: 72px;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
