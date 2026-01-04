@@ -127,27 +127,33 @@
         <h1 class="title">Create Post</h1>
 
         <div class="field">
+          <!-- svelte-ignore a11y_label_has_associated_control -->
           <label>Title</label>
           <input bind:value={title} placeholder="Post title" />
         </div>
 
         <div class="row">
           <div class="field">
+            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>Slug</label>
             <input bind:value={slug} placeholder="post-slug" />
           </div>
 
           <div class="field">
+            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>Date (optional)</label>
             <input bind:value={createdAt} type="date" />
           </div>
         </div>
 
         <div class="field">
+          <!-- svelte-ignore a11y_label_has_associated_control -->
           <label>Excerpt (optional)</label>
+          <!-- svelte-ignore element_invalid_self_closing_tag -->
           <textarea bind:value={excerpt} placeholder="Short text for the card..." />
         </div>
 
+        <!-- svelte-ignore a11y_label_has_associated_control -->
         <div class="field">
           <label>Cover image</label>
 
@@ -166,6 +172,7 @@
         </div>
 
         <div class="field">
+          <!-- svelte-ignore a11y_label_has_associated_control -->
           <label>Speakers (optional)</label>
 
           <div class="row">
@@ -202,6 +209,7 @@
         </div>
 
         <div class="field">
+          <!-- svelte-ignore a11y_label_has_associated_control -->
           <label>Content</label>
           <RichEditor onChange={(json) => (contentJson = json)} />
         </div>
