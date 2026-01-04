@@ -61,14 +61,12 @@
 
 
 <style>
-  /* === SECTION (same vibe as paths) === */
   .news {
     padding: 72px 16px 96px;
     max-width: 1200px;
     margin: 0 auto;
   }
 
-  /* === HEADER === */
   .news-header {
     text-align: center;
     margin-bottom: 56px;
@@ -120,14 +118,12 @@
       0 10px 28px rgba(15, 23, 42, 0.08);
   }
 
-  /* === GRID (same as paths-grid) === */
   .news-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 26px;
   }
 
-  /* === CARD (same as path-card) === */
   .news-card {
     display: block;
     text-align: left;
@@ -153,7 +149,6 @@
       0 10px 28px rgba(15, 23, 42, 0.08);
   }
 
-  /* === THUMB === */
   .news-thumb {
     width: 100%;
     height: 170px;
@@ -184,7 +179,6 @@
     color: #0f172a;
   }
 
-  /* === META === */
   .news-meta {
     display: flex;
     align-items: center;
@@ -211,7 +205,6 @@
     font-weight: 900;
   }
 
-  /* === TEXT (same style as path-card h3/p) === */
   .news-h3 {
     margin: 8px 0 10px;
     font-size: 18px;
@@ -234,46 +227,6 @@
     overflow: hidden;
   }
 
-  /* === ERROR === */
-  .news-error {
-    padding: 18px;
-    border-radius: 24px;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    background: #ffffff;
-    box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.08),
-      0 6px 18px rgba(15, 23, 42, 0.06);
-  }
-  .news-error-title {
-    font-weight: 900;
-    color: #0f172a;
-    margin-bottom: 6px;
-  }
-  .news-error-text {
-    color: #64748b;
-    font-size: 13px;
-  }
-
-  /* === SKELETON === */
-  .skeleton {
-    cursor: default;
-  }
-  .skeleton-thumb {
-    height: 170px;
-    border-radius: 18px;
-    background: rgba(15, 23, 42, 0.06);
-    margin-bottom: 14px;
-  }
-  .skeleton-line {
-    height: 12px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.06);
-    margin: 10px 0;
-  }
-  .w80 { width: 80%; }
-  .w60 { width: 60%; }
-
-  /* === RESPONSIVE (match your paths breakpoints) === */
   @media (max-width: 1024px) {
     .news-grid {
       grid-template-columns: repeat(2, 1fr);
