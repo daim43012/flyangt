@@ -1,6 +1,13 @@
 <script>
-  import AppHeader from '../../../components/App/AppHeader.svelte';
-  import Sidebar from '../../../components/App/Sidebar.svelte';
+  import AppHeader from "../../../components/App/AppHeader.svelte";
+  import Sidebar from "../../../components/App/Sidebar.svelte";
+  import { onMount } from "svelte";
+  import { wallet } from "$lib/wallet/wallet.store";
+  import FlyingPlanes from "../../../components/FlyingPlanes.svelte";
+
+  onMount(() => {
+    wallet.init();
+  });
 </script>
 
 <div class="app-shell">
@@ -11,6 +18,7 @@
   <aside class="app-sidebar" aria-label="Sidebar navigation">
     <Sidebar />
   </aside>
+  <FlyingPlanes />
 
   <div class="app-main">
     <AppHeader />
@@ -48,7 +56,6 @@
 
   .app-content {
     padding: 22px 22px 40px;
-    max-width: 1200px;
     width: 100%;
   }
 
