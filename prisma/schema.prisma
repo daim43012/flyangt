@@ -845,3 +845,17 @@ model FlyUsers {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model FlyPost {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  excerpt   String?
+  content   Json
+  image     String?
+  speakers  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
