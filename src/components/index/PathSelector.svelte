@@ -64,15 +64,11 @@
 </section>
 
 <style>
-  /* === SECTION === */
-
   .paths {
     padding: 72px 16px 96px;
     max-width: 1200px;
     margin: 0 auto;
   }
-
-  /* === HEADER === */
 
   .paths-header {
     text-align: center;
@@ -97,15 +93,11 @@
     color: #64748b;
   }
 
-  /* === GRID === */
-
   .paths-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 26px;
   }
-
-  /* === CARD === */
 
   .path-card {
     text-align: left;
@@ -130,8 +122,6 @@
       0 10px 28px rgba(15, 23, 42, 0.08);
   }
 
-  /* === ICON === */
-
   .path-icon {
     width: 42px;
     height: 42px;
@@ -142,8 +132,6 @@
     justify-content: center;
     font-size: 20px;
   }
-
-  /* === TEXT === */
 
   .path-card h3 {
     margin: 16px 0 10px;
@@ -161,8 +149,6 @@
     line-height: 1.55;
     color: #64748b;
   }
-
-  /* === RESPONSIVE === */
 
   @media (max-width: 1024px) {
     .paths-grid {
