@@ -1,125 +1,198 @@
-<section class="hero">
-  <div class="hero-top">
-    <h1 class="hero-title">FLYANGT</h1>
-    <div class="hero-subtitle">
-      UNIFIED AVIATION OWNERSHIP INFRASTRUCTURE
+<section class="hero" id="ecosystem">
+  <div class="hero-wrap">
+    <div class="hero-badge">
+      <span class="hero-dot"></span>
+      Unified Aviation Ownership Infrastructure
     </div>
-  </div>
 
-  <div class="hero-media">
-    <div class="media-frame">
-      <video
-        class="hero-video"
-        src="/video/plane.mp4"
-        autoplay
-        muted
-        loop
-        playsinline
-        preload="metadata"
-      ></video>
+    <h1 class="hero-title">Unified Aviation Ownership Ecosystem</h1>
 
-      <div class="media-overlay"></div>
+    <p class="hero-subtitle">
+      FlyANGT is a unified ecosystem that combines aircraft ownership, shared
+      access, digital management, and tokenized participation — built for the
+      European aviation market.
+    </p>
 
+    <div class="hero-trust">
+      Built with certified aircraft platforms, operational infrastructure, and a
+      professional team of aviation engineers, flight consultants, and industry
+      partners.
+    </div>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#ecosystem">Explore the Ecosystem</a>
+      <a class="btn btn-secondary" href="#paths">Choose Your Path</a>
+    </div>
+
+    <div class="hero-micro">
+      Flying. Ownership. Investment. Participation. One ecosystem.
     </div>
   </div>
 </section>
 
 <style>
   .hero {
-    padding: 48px 16px 24px;
+    position: relative;
+    padding: 92px 16px 46px;
+    overflow: hidden;
   }
 
-  .hero-top {
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        900px 460px at 50% -140px,
+        rgba(59, 130, 246, 0.1),
+        transparent 62%
+      ),
+      radial-gradient(
+        700px 420px at 18% -120px,
+        rgba(15, 23, 42, 0.06),
+        transparent 60%
+      ),
+      radial-gradient(
+        700px 420px at 82% -120px,
+        rgba(15, 23, 42, 0.06),
+        transparent 60%
+      );
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 64px;
+    width: min(980px, 92vw);
+    height: 1px;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(15, 23, 42, 0.08),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .hero-wrap {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
     text-align: center;
-    margin-bottom: 20px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.04);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 18px;
+  }
+
+  .hero-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.95);
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.14);
   }
 
   .hero-title {
-    font-size: 56px;
+    margin: 0;
+    font-size: 58px;
     font-weight: 900;
     text-transform: uppercase;
     font-style: italic;
     letter-spacing: -0.04em;
-    margin: 0;
     color: #0f172a;
+    line-height: 1.03;
   }
 
   .hero-subtitle {
-    margin-top: 6px;
+    max-width: 880px;
+    margin: 18px auto 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #64748b;
+  }
+
+  .hero-trust {
+    max-width: 920px;
+    margin: 18px auto 0;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow:
+      0 18px 60px rgba(15, 23, 42, 0.06),
+      0 6px 18px rgba(15, 23, 42, 0.04);
+  }
+
+  .hero-actions {
+    margin-top: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .hero-micro {
+    margin-top: 14px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
     color: #64748b;
   }
 
-  .hero-media {
-    display: flex;
-    justify-content: center;
-  }
-
-  .media-frame {
-    width: min(980px, 100%);
-    position: relative;
-    border-radius: 26px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow:
-      0 24px 80px rgba(15, 23, 42, 0.10),
-      0 10px 26px rgba(15, 23, 42, 0.08);
-  }
-
-  .media-frame::before {
-    content: "";
-    display: block;
-    padding-top: 44%;
-  }
-
-  .hero-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .media-overlay {
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.05),
-        rgba(15, 23, 42, 0.18)
-      );
-  }
-
-  .media-frame:hover .hero-video {
-    transform: scale(1.04);
-    transition: transform 0.6s ease;
-  }
-
-  @media (max-width: 720px) {
+  @media (max-width: 1024px) {
     .hero {
-      padding-top: 36px;
+      padding: 76px 16px 40px;
     }
 
     .hero-title {
-      font-size: 38px;
+      font-size: 44px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 58px 16px 34px;
+    }
+
+    .hero-badge {
+      padding: 9px 14px;
+      letter-spacing: 0.18em;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      letter-spacing: -0.02em;
     }
 
     .hero-subtitle {
-      font-size: 10px;
-      letter-spacing: 0.22em;
+      font-size: 14px;
     }
 
-    .media-frame {
-      border-radius: 20px;
+    .hero-trust {
+      border-radius: 18px;
+      padding: 12px 14px;
     }
 
-    .media-frame::before {
-      padding-top: 62%;
+    .hero-actions {
+      gap: 10px;
     }
-
   }
 </style>
