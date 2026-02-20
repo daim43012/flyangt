@@ -1,32 +1,104 @@
 <script lang="ts">
   import { page } from "$app/stores";
 
-  const nav = [
-    { href: "/app/dashboard", label: "Dashboard", icon: "grid" },
-    { href: "/app/config", label: "ANG-01 Config", icon: "plane" },
-    { href: "/app/finance", label: "Finance & Pools", icon: "chart" },
-    { href: "/app/rewards", label: "Rewards Station", icon: "bolt" },
-    { href: "/app/advisor", label: "Flight Advisor", icon: "compass" },
-    { href: "/app/documents", label: "Document Center", icon: "doc" },
+  type NavItem = {
+    href: string;
+    label: string;
+    iconClass: string;
+  };
+
+  type NavSection = {
+    title: string;
+    items: NavItem[];
+  };
+
+  const navSections: NavSection[] = [
+    {
+      title: "Core",
+      items: [
+        {
+          href: "/",
+          label: "Home",
+          iconClass:
+            "fa-solid fa-house w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+
+        {
+          href: "/app/dashboard",
+          label: "Dashboard",
+          iconClass:
+            "fa-solid fa-grip w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+        {
+          href: "/app/config",
+          label: "ANG-01 Config",
+          iconClass:
+            "fa-solid fa-plane w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+        {
+          href: "/app/documents",
+          label: "Document Center",
+          iconClass:
+            "fa-solid fa-folder-open w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+      ],
+    },
+    {
+      title: "Programs",
+      items: [
+        {
+          href: "/app/presale",
+          label: "Presale",
+          iconClass:
+            "fa-solid fa-ticket w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+        {
+          href: "/app/airdrop",
+          label: "Airdrop",
+          iconClass:
+            "fa-solid fa-parachute-box w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+        {
+          href: "/app/staking",
+          label: "Staking",
+          iconClass:
+            "fa-solid fa-coins w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+        {
+          href: "/app/rewards",
+          label: "Rewards",
+          iconClass:
+            "fa-solid fa-gift w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+      ],
+    },
+    {
+      title: "Tools",
+      items: [
+        {
+          href: "/app/advisor",
+          label: "Flight Advisor",
+          iconClass:
+            "fa-solid fa-compass w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        },
+      ],
+    },
   ];
 
-  const isActive = (pathname: any, href: any) =>
+  const isActive = (pathname: string, href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
   $: user = $page.data?.user;
   $: email = user?.email ?? null;
+
   async function logout() {
-  try {
-    await fetch('/api/logout', {
-      method: 'POST'
-    });
-
-    window.location.href = '/login';
-  } catch (e) {
-    console.error('Logout failed', e);
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
   }
-}
-
 </script>
 
 <div class="sidebar-card">
@@ -36,35 +108,26 @@
   </div>
 
   <nav class="nav" aria-label="App navigation">
-    {#each nav as item}
-      <a
-        class="nav-item {isActive($page.url.pathname, item.href)
-          ? 'is-active'
-          : ''}"
-        href={item.href}
-      >
-        <span class="nav-ic" aria-hidden="true">
-          {#if item.icon === "grid"}
-            ⊞
-          {/if}
-          {#if item.icon === "plane"}
-            ✈︎
-          {/if}
-          {#if item.icon === "chart"}
-            📊
-          {/if}
-          {#if item.icon === "bolt"}
-            ⚡
-          {/if}
-          {#if item.icon === "compass"}
-            🧭
-          {/if}
-          {#if item.icon === "doc"}
-            📄
-          {/if}
-        </span>
-        <span class="nav-label">{item.label}</span>
-      </a>
+    {#each navSections as section}
+      <div class="nav-section">
+        <div class="nav-section-title">{section.title}</div>
+
+        <div class="nav-section-items">
+          {#each section.items as item}
+            <a
+              class="nav-item group {isActive($page.url.pathname, item.href)
+                ? 'is-active'
+                : ''}"
+              href={item.href}
+            >
+              <span class="nav-ic" aria-hidden="true">
+                <i class={item.iconClass}></i>
+              </span>
+              <span class="nav-label">{item.label}</span>
+            </a>
+          {/each}
+        </div>
+      </div>
     {/each}
   </nav>
 
@@ -91,21 +154,28 @@
     {/if}
 
     <div class="footer-actions">
-      <button class="mini-btn" type="button" aria-label="Settings">⚙️</button>
-<button
-  class="mini-btn"
-  type="button"
-  aria-label="Logout"
-  title="Logout"
-  on:click={logout}
->
-  ⎋
-</button>
+      <a href="/app/settings" aria-label="Settings">
+        <button class="mini-btn" type="button">⚙️</button>
+      </a>
+      <button
+        class="mini-btn"
+        type="button"
+        aria-label="Logout"
+        title="Logout"
+        on:click={logout}
+      >
+        ⎋
+      </button>
     </div>
   </div>
 </div>
 
 <style>
+  /* ================================
+   FlyANG Sidebar: full styles
+   (soft premium glass + mild active)
+================================ */
+
   .sidebar-card {
     height: 100%;
     border-radius: 22px;
@@ -120,6 +190,7 @@
     overflow: hidden;
   }
 
+  /* Brand */
   .brand {
     padding: 18px 16px 12px;
     border-bottom: 1px solid rgba(15, 23, 42, 0.06);
@@ -143,12 +214,35 @@
     color: #64748b;
   }
 
+  /* Nav */
   .nav {
     padding: 10px 10px 12px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
     flex: 1;
+    overflow: auto;
+  }
+
+  .nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nav-section-title {
+    padding: 6px 10px 2px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+
+  .nav-section-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .nav-item {
@@ -157,27 +251,43 @@
     gap: 10px;
     padding: 12px 12px;
     border-radius: 14px;
+    font-style: italic;
+    letter-spacing: -0.03em;
     color: #0f172a;
     text-decoration: none;
     border: 1px solid transparent;
     transition:
-      background 0.35s ease,
-      box-shadow 0.35s ease,
-      transform 0.35s ease;
+      background 0.28s ease,
+      box-shadow 0.28s ease,
+      transform 0.28s ease,
+      border-color 0.28s ease;
   }
 
   .nav-item:hover {
-    background: rgba(15, 23, 42, 0.04);
+    background: rgba(15, 23, 42, 0.035);
+    border-color: rgba(15, 23, 42, 0.06);
   }
 
   .nav-item.is-active {
-    background: #2563eb;
-    color: #ffffff;
+    background: radial-gradient(
+        1200px 420px at 25% 20%,
+        rgba(37, 99, 235, 0.2),
+        transparent 60%
+      ),
+      radial-gradient(
+        1100px 420px at 80% 20%,
+        rgba(124, 58, 237, 0.18),
+        transparent 62%
+      ),
+      linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.06));
+    color: #0f172a;
     box-shadow:
-      0 14px 36px rgba(37, 99, 235, 0.28),
-      0 6px 14px rgba(15, 23, 42, 0.1);
+      inset 0 0 0 1px rgba(15, 23, 42, 0.08),
+      0 10px 30px rgba(15, 23, 42, 0.1);
+    border-color: rgba(15, 23, 42, 0.06);
   }
 
+  /* Icon container */
   .nav-ic {
     width: 32px;
     height: 32px;
@@ -185,16 +295,45 @@
     display: grid;
     place-items: center;
     background: rgba(15, 23, 42, 0.05);
-    font-size: 15px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    transition:
+      background 0.28s ease,
+      border-color 0.28s ease,
+      box-shadow 0.28s ease;
+  }
+
+  .nav-ic :global(i) {
+    color: #6e7e96; /* slate-600 */
+    font-size: 16px;
+    font-weight: 600;
+    transition:
+      color 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  .nav-item:hover .nav-ic :global(i) {
+    color: #2563eb;
+    transform: translateY(-1px);
   }
 
   .nav-item.is-active .nav-ic {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(15, 23, 42, 0.08);
+    box-shadow:
+      0 8px 20px rgba(15, 23, 42, 0.1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  }
+
+  .nav-item.is-active .nav-ic :global(i) {
+    color: #1e40af;
+    transform: none;
   }
 
   .nav-label {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #000000;
   }
 
   .sidebar-footer {
@@ -211,6 +350,7 @@
     align-items: center;
     gap: 10px;
     min-width: 0;
+    text-decoration: none;
   }
 
   .avatar {
