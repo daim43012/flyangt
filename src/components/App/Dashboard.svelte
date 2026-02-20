@@ -4,11 +4,13 @@
   import InvestmentPoolCard from "./dashboard/InvestmentPoolCard.svelte";
   import CommunityActivityCard from "./dashboard/CommunityActivityCard.svelte";
   import BalancesCard from "./dashboard/BalancesCard.svelte";
+  import Weather from "./dashboard/Weather.svelte";
 </script>
 
 <section class="dashboard">
   <div class="main-col">
     <Hero />
+    <Weather />
     <TokenPerformanceCard />
     <InvestmentPoolCard />
     <CommunityActivityCard />
