@@ -1,18 +1,80 @@
 <script lang="ts">
-  const data = {
-    symbol: "ANGT",
-    name: "FlyANG Token",
+  import { onMount } from "svelte";
 
-    price: 0.84,
-    changePct24h: 6.25,
-    changeUsd24h: 0.049,
+  const TOKEN_ADDRESS = "0xDa517744d51E5028db6624B5048aCC9C6bE67A7E";
 
-    high24h: 0.86,
-    low24h: 0.78,
-    volume24h: 1284500,
-
-    spark: [0.72, 0.73, 0.71, 0.74, 0.76, 0.75, 0.78, 0.8, 0.82, 0.81, 0.83, 0.84]
+  type PriceApiResponse = {
+    tokenAddress: string;
+    network: "polygon";
+    symbol: string;
+    name: string;
+    priceUsd: number;
+    source: "dexscreener";
+    updatedAt: string;
   };
+
+  type UiData = {
+    symbol: string;
+    name: string;
+
+    price: number;
+    changePct24h: number;
+    changeUsd24h: number;
+
+    high24h: number;
+    low24h: number;
+    volume24h: number;
+
+    spark: number[];
+  };
+
+  let data: UiData = {
+    symbol: "—",
+    name: "—",
+    price: NaN,
+    changePct24h: 0,
+    changeUsd24h: 0,
+    high24h: NaN,
+    low24h: NaN,
+    volume24h: NaN,
+    spark: [],
+  };
+
+  let loading = false;
+  let err: string | null = null;
+
+  async function load() {
+    loading = true;
+    err = null;
+
+    try {
+      const r = await fetch(
+        `/api/token/price?address=${encodeURIComponent(TOKEN_ADDRESS)}`,
+      );
+      const j = await r.json();
+
+      data = {
+        symbol: j.symbol,
+        name: j.name,
+
+        price: j.priceUsd,
+        changePct24h: j.changePct24h,
+        changeUsd24h: (j.priceUsd * j.changePct24h) / 100,
+
+        high24h: NaN,
+        low24h: NaN,
+
+        volume24h: j.volume24h,
+        spark: Array.from({ length: 12 }, () => j.priceUsd),
+      };
+    } catch (e) {
+      err = e instanceof Error ? e.message : "Unknown error";
+    } finally {
+      loading = false;
+    }
+  }
+
+  onMount(load);
 
   function fmtUsd(v: number, maxFrac = 6) {
     if (!Number.isFinite(v)) return "-";
@@ -35,7 +97,6 @@
     const min = Math.min(...values);
     const max = Math.max(...values);
     const span = max - min || 1;
-
     const step = (w - pad * 2) / Math.max(values.length - 1, 1);
 
     return values
@@ -97,7 +158,6 @@
     </div>
   </div>
 </section>
-
 
 <style>
   .card {
@@ -169,18 +229,22 @@
   }
 
   .badge.up {
-    background: rgba(16, 185, 129, 0.10);
+    background: rgba(16, 185, 129, 0.1);
     border-color: rgba(16, 185, 129, 0.18);
     color: rgba(6, 95, 70, 0.95);
   }
-  .badge.up .dot { background: rgba(16, 185, 129, 0.9); }
+  .badge.up .dot {
+    background: rgba(16, 185, 129, 0.9);
+  }
 
   .badge.down {
-    background: rgba(239, 68, 68, 0.10);
+    background: rgba(239, 68, 68, 0.1);
     border-color: rgba(239, 68, 68, 0.18);
     color: rgba(153, 27, 27, 0.95);
   }
-  .badge.down .dot { background: rgba(239, 68, 68, 0.9); }
+  .badge.down .dot {
+    background: rgba(239, 68, 68, 0.9);
+  }
 
   .main {
     margin-top: 14px;
@@ -212,8 +276,12 @@
     font-weight: 900;
     color: rgba(15, 23, 42, 0.55);
   }
-  .delta.up { color: rgba(6, 95, 70, 0.9); }
-  .delta.down { color: rgba(153, 27, 27, 0.9); }
+  .delta.up {
+    color: rgba(6, 95, 70, 0.9);
+  }
+  .delta.down {
+    color: rgba(153, 27, 27, 0.9);
+  }
 
   .spark {
     width: 150px;
@@ -257,7 +325,7 @@
   .slabel {
     font-size: 11px;
     font-weight: 900;
-    letter-spacing: 0.10em;
+    letter-spacing: 0.1em;
     color: rgba(15, 23, 42, 0.45);
     text-transform: uppercase;
   }
