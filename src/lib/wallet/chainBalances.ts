@@ -1,4 +1,3 @@
-// src/lib/server/chainBalances.ts
 import { ethers } from 'ethers';
 import { getTokensFromEnv, type TokenSymbol } from './tokens';
 
@@ -56,7 +55,6 @@ export async function getOnchainBalances(address: string): Promise<BalancesRespo
   const TOKENS = getTokensFromEnv();
   const provider = new ethers.JsonRpcProvider(getRpcUrl());
 
-  // POL всегда доступен
   const polWei = await provider.getBalance(address);
 
   const [usdtItem, angtItem] = await Promise.all([
