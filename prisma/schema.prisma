@@ -358,9 +358,15 @@ model Event {
   registrations EventRegistration[]
 }
 
+enum ByWho {
+  USER
+  ADMIN
+}
+
 model EventCategory {
   id     String    @id @default(cuid())
   name   String    @unique
+  byWho  ByWho?
   events Event[]   @relation("EventCategories")
   brands Brand[]   @relation("BrandCategories")
   users  CbcUser[] @relation("UserInterests")
@@ -817,17 +823,17 @@ model SmartComplianceUsers {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bookings  Booking[]
+  bookings Booking[]
 }
 
 model Booking {
-  id          String   @id @default(cuid())
-  userId      String
-  user        SmartComplianceUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String               @id @default(cuid())
+  userId String
+  user   SmartComplianceUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  startAt     DateTime
-  endAt       DateTime
-  createdAt   DateTime @default(now())
+  startAt   DateTime
+  endAt     DateTime
+  createdAt DateTime @default(now())
 
   meetUrl     String?
   gcalEventId String?
@@ -844,6 +850,23 @@ model FlyUsers {
   googleId  String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  phone     String?
+  country   String?
+  age       Int?
+  instagram String?
+  x         String?
+  telegram  String?
+
+  referralCode String     @unique
+  referredById String?
+  referredBy   FlyUsers?  @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals    FlyUsers[] @relation("UserReferrals")
+
+  wallet           WalletInfo?
+  rewards          RewardLedger[]
+  total            RewardTotal?
+  presalePurchases PresalePurchase[]
+  presaleTotal     PresaleTotal?
 }
 
 model FlyPost {
@@ -858,4 +881,226 @@ model FlyPost {
   updatedAt DateTime @updatedAt
 
   @@index([createdAt])
+}
+
+model SpiritUsers {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?
+  googleId  String?  @unique
+  telegram  String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions SpiritTransaction[]
+}
+
+model TrainingVideo {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  durationSec Int?
+  price       Int      @default(0)
+  fileName    String
+  imageUrl    String
+  materials   Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+
+  @@index([isActive, createdAt])
+}
+
+enum ProductType {
+  TRAINING_VIDEO
+  EVENT
+}
+
+model SpiritTransaction {
+  id                String       @id @default(cuid())
+  userId            String
+  user              SpiritUsers  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productType       ProductType?
+  productId         String?
+  price             Int
+  createdAt         DateTime     @default(now())
+  status            String?
+  providerPaymentId String?
+  rawDetails        Json?
+
+  @@index([userId, createdAt])
+  @@index([productType, productId])
+  @@index([providerPaymentId])
+}
+
+enum EventFormat {
+  OFFLINE
+  ONLINE
+}
+
+model SpiritEvent {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  agenda      String?
+  format      EventFormat @default(OFFLINE)
+  location    String
+  startAt     DateTime
+  endAt       DateTime?
+  coverUrl    String?
+  price       Int         @default(0)
+  materials   Json?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([isActive, startAt])
+}
+
+model EduUsers {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  surname   String?
+  phone     String?
+  birthDate DateTime?
+  password  String?
+  googleId  String?   @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Herb {
+  id          Int     @id @default(autoincrement())
+  nameLa      String  @unique
+  name        Json
+  description Json?
+  image       String?
+
+  properties        TherapeuticProperty[]
+  bodySystems       BodySystem[]
+  symptoms          Symptom[]
+  constituents      Constituent[]
+  contraindications Contraindication[]
+}
+
+model TherapeuticProperty {
+  id          Int    @id @default(autoincrement())
+  slug        String @unique
+  name        Json
+  description Json?
+  herbs       Herb[]
+}
+
+model BodySystem {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  name  Json
+  herbs Herb[]
+}
+
+model Symptom {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  name  Json
+  herbs Herb[]
+}
+
+model Constituent {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  name  Json
+  herbs Herb[]
+}
+
+model Contraindication {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  name  Json
+  herbs Herb[]
+}
+
+model WalletInfo {
+  id String @id @default(cuid())
+
+  userId String   @unique
+  user   FlyUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  address  String  @unique
+  provider String?
+
+  verified   Boolean   @default(false)
+  verifiedAt DateTime?
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  presalePurchases PresalePurchase[]
+  presaleTotal     PresaleTotal?
+}
+
+model RewardLedger {
+  id String @id @default(cuid())
+
+  userId        String
+  user          FlyUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletAddress String
+  taskKey       String
+  taskTitle     String?
+  amount        Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, taskKey])
+  @@index([walletAddress])
+  @@index([userId, createdAt])
+}
+
+model RewardTotal {
+  id String @id @default(cuid())
+
+  userId String   @unique
+  user   FlyUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  walletAddress String @unique
+  totalAmount   Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@index([walletAddress])
+}
+
+model PresalePurchase {
+  id String @id @default(cuid())
+
+  userId String
+  user   FlyUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  walletId    String?
+  wallet      WalletInfo? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  method      String
+  currency    String?
+  status      String      @default("pending")
+  week        Int?
+  price       Float       @default(0)
+  payAmount   Float       @default(0)
+  tokenAmount Float       @default(0)
+  externalId  String?     @unique
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([walletId])
+  @@index([status])
+}
+
+model PresaleTotal {
+  id               String      @id @default(cuid())
+  userId           String      @unique
+  user             FlyUsers    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId         String?     @unique
+  wallet           WalletInfo? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  totalTokenAmount Float       @default(0)
+  updatedAt        DateTime    @updatedAt
+
+  @@index([walletId])
 }
