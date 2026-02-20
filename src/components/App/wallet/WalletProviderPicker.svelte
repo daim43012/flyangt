@@ -1,16 +1,39 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { wallet } from "$lib/wallet/wallet.store";
 
-  $: providers = wallet.listProviders();
+  // локальный список, чтобы EIP-6963 реально обновлял UI
+  let providers: { id: string; name: string; icon?: string }[] = [];
+
   $: selected = $wallet.providerId;
+  $: status = $wallet.status;
+
+  function refreshProviders() {
+    providers = wallet.listProviders();
+  }
+
+  onMount(() => {
+    refreshProviders();
+
+    // EIP-6963 может "доанонсить" провайдеры чуть позже
+    const t = setInterval(refreshProviders, 250);
+    const stop = setTimeout(() => clearInterval(t), 2500);
+
+    return () => {
+      clearInterval(t);
+      clearTimeout(stop);
+    };
+  });
 </script>
 
-{#if providers.length > 1}
+{#if status === "connected"}
+  <!-- ✅ когда подключено — выбор провайдера не показываем вообще -->
+{:else if providers.length > 1}
   <div class="pp">
     <div class="pp-title">Choose wallet</div>
 
     <div class="pp-grid">
-      {#each providers as p}
+      {#each providers as p (p.id)}
         <button
           class="pp-btn"
           class:active={p.id === selected}
@@ -31,8 +54,18 @@
     </div>
 
     <div class="pp-hint">
-      Tip: select a wallet first, then press Connect.
+      Select a wallet first, then press Connect.
     </div>
+  </div>
+{:else if providers.length === 1}
+  <div class="pp">
+    <div class="pp-title">Wallet</div>
+    <div class="pp-hint">Only one provider detected</div>
+  </div>
+{:else}
+  <div class="pp">
+    <div class="pp-title">Wallet</div>
+    <div class="pp-hint">No provider detected</div>
   </div>
 {/if}
 
