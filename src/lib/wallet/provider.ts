@@ -17,10 +17,10 @@ export type Eip1193Provider = {
 };
 
 export type NamedProvider = {
-  id: string;       
-  name: string;    
+  id: string;
+  name: string;
   provider: Eip1193Provider;
-  icon?: string;    
+  icon?: string;
 };
 
 const LS_KEY = "wallet_provider_id";
@@ -48,11 +48,14 @@ export function startEip6963Discovery() {
     const provider = e.detail?.provider;
     if (!info || !provider?.request) return;
 
+    // ✅ СТАБИЛЬНЫЙ ID: без uuid (uuid у некоторых расширений может "гулять")
+    const stableId = `eip6963:${info.rdns}`;
+
     addDiscovered({
-      id: `eip6963:${info.rdns}:${info.uuid}`,
+      id: stableId,
       name: info.name,
       icon: info.icon,
-      provider
+      provider,
     });
   };
 
@@ -69,6 +72,7 @@ function fallbackInjectedProviders(): NamedProvider[] {
   const w = window as any;
   const out: NamedProvider[] = [];
 
+  // Phantom (часто отдельно от window.ethereum)
   if (w.phantom?.ethereum?.request) {
     out.push({ id: "phantom", name: "Phantom", provider: w.phantom.ethereum });
   }
@@ -87,6 +91,7 @@ function fallbackInjectedProviders(): NamedProvider[] {
     }
   }
 
+  // unique by provider reference
   const uniq: NamedProvider[] = [];
   const seen = new Set<any>();
   for (const item of out) {
@@ -98,17 +103,20 @@ function fallbackInjectedProviders(): NamedProvider[] {
 }
 
 function guessId(p: any) {
+  // ✅ MetaMask иногда не ставит isMetaMask на вложенных провайдерах,
+  // но чаще есть _metamask / isMetaMask.
   if (p?.isRabby) return "rabby";
-  if (p?.isMetaMask) return "metamask";
+  if (p?.isMetaMask || p?._metamask) return "metamask";
   if (p?.isCoinbaseWallet) return "coinbase";
   if (p?.isBraveWallet) return "brave";
   if (p?.isOKExWallet) return "okx";
   if (p?.isPhantom || p?._isPhantom) return "phantom";
   return "injected";
 }
+
 function guessName(p: any) {
   if (p?.isRabby) return "Rabby";
-  if (p?.isMetaMask) return "MetaMask";
+  if (p?.isMetaMask || p?._metamask) return "MetaMask";
   if (p?.isCoinbaseWallet) return "Coinbase Wallet";
   if (p?.isBraveWallet) return "Brave Wallet";
   if (p?.isOKExWallet) return "OKX Wallet";
@@ -142,12 +150,15 @@ export function getPreferredProvider(): NamedProvider | null {
     if (match) return match;
   }
 
+  // приоритет (можно менять)
   const priority = ["rabby", "metamask", "coinbase", "brave", "okx", "phantom", "injected"];
+
   for (const id of priority) {
     const match = providers.find((p) => p.id === id);
     if (match) return match;
   }
 
+  // если есть eip6963 и ничего не совпало — просто первый
   return providers[0];
 }
 
@@ -163,7 +174,7 @@ export async function ensurePolygon(provider: Eip1193Provider) {
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: POLYGON.chainIdHex }]
+      params: [{ chainId: POLYGON.chainIdHex }],
     });
   } catch (e: any) {
     if (e?.code === 4902) {
@@ -175,9 +186,9 @@ export async function ensurePolygon(provider: Eip1193Provider) {
             chainName: POLYGON.name,
             nativeCurrency: POLYGON.nativeCurrency,
             rpcUrls: POLYGON.rpcUrls,
-            blockExplorerUrls: POLYGON.blockExplorerUrls
-          }
-        ]
+            blockExplorerUrls: POLYGON.blockExplorerUrls,
+          },
+        ],
       });
       return;
     }
