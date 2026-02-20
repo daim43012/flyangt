@@ -1,44 +1,52 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
 
-  let name = '';
-  let email = '';
-  let password = '';
-  let password2 = '';
+  let name = "";
+  let email = "";
+  let password = "";
+  let password2 = "";
   let agree = false;
 
+  let referralCode = "";
+
   let loading = false;
-  let error = '';
+  let error = "";
+
+  onMount(() => {
+    const ref = new URLSearchParams(location.search).get("ref");
+    if (ref) referralCode = ref.toUpperCase().trim();
+  });
 
   async function submit() {
-    error = '';
+    error = "";
 
     if (!agree) {
-      error = 'Please accept the Terms and Privacy Policy.';
+      error = "Please accept the Terms and Privacy Policy.";
       return;
     }
     if (password !== password2) {
-      error = 'Passwords do not match.';
+      error = "Passwords do not match.";
       return;
     }
 
     loading = true;
     try {
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name, email, password, referralCode }),
       });
 
       if (!res.ok) {
         const text = await res.text();
-        error = text || 'Registration failed.';
+        error = text || "Registration failed.";
         return;
       }
 
-      await goto('/app/dashboard');
+      await goto("/app/dashboard");
     } catch (e) {
-      error = 'Network error. Please try again.';
+      error = "Network error. Please try again.";
     } finally {
       loading = false;
     }
@@ -53,10 +61,10 @@
       <p class="auth-subtitle">Get access first — connect Web3 later</p>
     </div>
 
-<a class="auth-google" href="/api/auth/google">
-  <span class="g-dot" aria-hidden="true"></span>
-  Continue with Google
-</a>
+    <a class="auth-google" href="/api/auth/google">
+      <span class="g-dot" aria-hidden="true"></span>
+      Continue with Google
+    </a>
 
     <div class="auth-divider" aria-hidden="true">
       <span>or</span>
@@ -86,6 +94,16 @@
         <span class="label">Confirm password</span>
         <input class="input" type="password" bind:value={password2} required />
       </label>
+      
+      <label class="field">
+        <span class="label">Referral code (optional)</span>
+        <input
+          class="input"
+          type="text"
+          bind:value={referralCode}
+          placeholder="ABC123"
+        />
+      </label>
 
       <label class="agree">
         <input class="checkbox" type="checkbox" bind:checked={agree} />
@@ -96,7 +114,7 @@
       </label>
 
       <button class="primary" type="submit" disabled={loading}>
-        {loading ? 'Creating…' : 'Create account'}
+        {loading ? "Creating…" : "Create account"}
       </button>
 
       <p class="hint">
@@ -139,7 +157,7 @@
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(15, 23, 42, 0.06);
     box-shadow:
-      0 24px 80px rgba(15, 23, 42, 0.10),
+      0 24px 80px rgba(15, 23, 42, 0.1),
       0 10px 26px rgba(15, 23, 42, 0.08);
     backdrop-filter: blur(14px);
   }
@@ -180,7 +198,7 @@
     width: 100%;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
+    border: 1px solid rgba(15, 23, 42, 0.1);
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
     cursor: pointer;
@@ -203,7 +221,7 @@
   .auth-google:hover {
     transform: translateY(-2px);
     border-color: rgba(37, 99, 235, 0.22);
-    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.10);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.1);
   }
 
   .g-dot {
@@ -261,7 +279,7 @@
     width: 100%;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
+    border: 1px solid rgba(15, 23, 42, 0.1);
     background: rgba(255, 255, 255, 0.95);
     outline: none;
 
@@ -274,7 +292,7 @@
   }
 
   .input:focus {
-    border-color: rgba(37, 99, 235, 0.40);
+    border-color: rgba(37, 99, 235, 0.4);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
   }
 
@@ -330,7 +348,7 @@
   .primary:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 26px 70px rgba(37, 99, 235, 0.30),
+      0 26px 70px rgba(37, 99, 235, 0.3),
       0 10px 26px rgba(15, 23, 42, 0.14);
   }
 
