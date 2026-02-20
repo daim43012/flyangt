@@ -1,0 +1,480 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { BrowserProvider } from "ethers";
+
+  import { wallet } from "$lib/wallet/wallet.store";
+  import { chainKey } from "$lib/wallet/chains";
+  import { ADDRESSES } from "$lib/web3/addresses";
+  import { PRESALE_ABI } from "$lib/web3/abi/presale.abi";
+
+  type WeekItem = { week: number; price: number; desc: string };
+
+  let loading = false;
+  let errorText: string | null = null;
+
+  let onchainCurrentWeek = 0;
+  let onchainWeeks: WeekItem[] = [];
+
+  const money = (v: any) => `$${Number(v).toFixed(4)}`;
+
+  // Always show polygon roadmap by default, regardless of wallet
+  // If wallet is connected to localhost, you can still show localhost by chainKey.
+  $: net = chainKey($wallet.chainId) ?? "polygon";
+  $: C = (ADDRESSES as any)[net] ?? ADDRESSES.polygon;
+
+  $: currentWeek = Math.max(
+    1,
+    Math.min(onchainWeeks.length || 1, Number(onchainCurrentWeek || 1)),
+  );
+
+  function statusOf(w: number) {
+    if (w < currentWeek) return "past";
+    if (w === currentWeek) return "current";
+    return "future";
+  }
+
+  const PUBLIC_POLYGON_RPC = "https://polygon-rpc.com/";
+
+  function getReadProvider() {
+    if ($wallet.provider) return new BrowserProvider($wallet.provider as any);
+    return new BrowserProvider(
+      {
+        request: async ({ method, params }: any) => {
+          const body = {
+            jsonrpc: "2.0",
+            id: 1,
+            method,
+            params: params ?? [],
+          };
+
+          const res = await fetch(PUBLIC_POLYGON_RPC, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          const json = await res.json();
+          if (json.error) throw new Error(json.error.message || "RPC error");
+          return json.result;
+        },
+      } as any,
+    );
+  }
+
+  async function loadRoadmap() {
+    loading = true;
+    errorText = null;
+
+    try {
+      const rp = getReadProvider();
+      const c: any = new (await import("ethers")).Contract(C.presale, PRESALE_ABI, rp);
+
+      const [lenBn, cwBn] = await Promise.all([c.pricesLength(), c.currentWeek()]);
+      const len = Number(lenBn);
+      const cw = Number(cwBn);
+
+      const pricesMicro: bigint[] = await Promise.all(
+        Array.from({ length: len }, (_, i) => c.priceForWeek(i + 1)),
+      );
+
+      onchainWeeks = pricesMicro.map((p, i) => ({
+        week: i + 1,
+        price: Number(p) / 1e6,
+        desc: i === 0 ? "Launch price" : "+10% from start",
+      }));
+
+      onchainCurrentWeek = cw;
+    } catch (e: any) {
+      errorText = e?.shortMessage ?? e?.message ?? "Failed to load presale roadmap";
+      onchainWeeks = [];
+      onchainCurrentWeek = 0;
+    } finally {
+      loading = false;
+    }
+  }
+
+  // Load once, and refresh when contract address changes (network switch)
+  onMount(loadRoadmap);
+
+  $: if (C?.presale) {
+    C.presale;
+    loadRoadmap();
+  }
+</script>
+
+<div class="wrap">
+  <div class="head">
+    <div class="left">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 19V5a2 2 0 0 1 2-2h8"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M18 5v14a2 2 0 0 1-2 2H8"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M9 8h6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M9 12h6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M9 16h6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+      <div class="title">PRESALE PRICE ROADMAP</div>
+    </div>
+
+    <div class="meta">
+      <div class="pill">{onchainWeeks.length || 0} weeks</div>
+      <div class="pill blue">On chain</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+<!-- 
+  {#if loading}
+    <div style="padding: 12px; font-size: 13px; opacity: 0.85;">
+      Loading on chain data…
+    </div>
+  {/if}
+
+  {#if errorText}
+    <div style="padding: 12px; font-size: 13px; color: #ff7a7a;">
+      {errorText}
+    </div>
+  {/if} -->
+
+  <div class="list">
+    {#each onchainWeeks as w}
+      {@const st = statusOf(w.week)}
+      <div class="item {st} {st === 'current' ? 'full' : 'compact'}">
+        <div class="dot" aria-hidden="true"></div>
+
+        <div class="card">
+          <div class="top">
+            <div class="wkline">
+              <div class="wk">Week {w.week}</div>
+
+              {#if st !== "current"}
+                <span class="mini">{w.desc}</span>
+              {/if}
+
+              {#if st === "current"}
+                <span class="badge">Current week</span>
+              {/if}
+            </div>
+
+            <div class="price">{money(w.price)}</div>
+          </div>
+
+          {#if st === "current"}
+            <div class="desc">{w.desc}</div>
+          {/if}
+        </div>
+      </div>
+    {/each}
+  </div>
+
+  <div class="footer">
+    <div class="goal">
+      Target listing price:
+      <b>{onchainWeeks.length ? money(onchainWeeks[onchainWeeks.length - 1].price) : "—"}</b>
+    </div>
+  </div>
+</div>
+
+<style>
+  .wrap {
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow:
+      0 18px 40px rgba(15, 23, 42, 0.08),
+      0 1px 0 rgba(255, 255, 255, 0.85) inset;
+    align-items: start;
+    transition:
+      transform 0.12s ease,
+      filter 0.12s ease;
+  }
+
+  .wrap:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.01);
+  }
+
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .icon {
+    width: 26px;
+    height: 26px;
+    color: rgba(37, 99, 235, 0.95);
+    display: inline-grid;
+    place-items: center;
+  }
+  .icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .title {
+     margin: 0;
+    font-size: 22px;
+    font-weight: 950;
+    letter-spacing: -0.03em;
+    font-style: italic;
+    color: #0f172a;
+  }
+
+  .meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    color: rgba(15, 23, 42, 0.72);
+  }
+
+  .pill.blue {
+    color: rgba(37, 99, 235, 0.95);
+    border-color: rgba(37, 99, 235, 0.18);
+    background: rgba(37, 99, 235, 0.06);
+  }
+
+  .divider {
+    height: 1px;
+    background: rgba(15, 23, 42, 0.08);
+    margin: 14px 0 16px;
+  }
+
+  .list {
+    display: grid;
+    gap: 10px;
+    position: relative;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 12px;
+    align-items: start;
+    position: relative;
+  }
+
+  /* vertical line */
+  .item::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 18px;
+    bottom: -10px;
+    width: 2px;
+    background: rgba(15, 23, 42, 0.08);
+  }
+  .item:last-child::before {
+    display: none;
+  }
+
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.12);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
+    margin-top: 6px;
+  }
+
+  /* === CARD BASE === */
+  .card {
+    border-radius: 16px;
+    background: rgba(248, 250, 252, 0.75);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+    transition: transform 0.12s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-1px);
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .wkline {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .wk {
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    color: rgba(15, 23, 42, 0.82);
+    white-space: nowrap;
+  }
+
+  .mini {
+    font-size: 12px;
+    font-weight: 900;
+    color: rgba(15, 23, 42, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .price {
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    color: rgba(37, 99, 235, 0.95);
+  }
+
+  .desc {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 900;
+    color: rgba(15, 23, 42, 0.55);
+  }
+
+  /* === COMPACT (past/future) === */
+  .item.compact .card {
+    padding: 10px 12px; /* тоньше */
+    border-radius: 14px;
+  }
+
+  /* === FULL (current) === */
+  .item.full .card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .badge {
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: rgba(37, 99, 235, 0.08);
+    color: rgba(37, 99, 235, 0.95);
+    white-space: nowrap;
+  }
+
+  /* === STATES === */
+
+  /* Past = зелёный (как ты сказал) */
+  .item.past .dot {
+    background: #22c55e;
+  }
+  .item.past .price {
+    color: #22c55e;
+  }
+  .item.past .card {
+    background: rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.16);
+  }
+
+  /* Current = выделение (потолще, акцент) */
+  .item.current .dot {
+    background: rgba(37, 99, 235, 0.95);
+  }
+  .item.current .card {
+    background: rgba(37, 99, 235, 0.06);
+    border-color: rgba(37, 99, 235, 0.18);
+    box-shadow:
+      0 18px 36px rgba(37, 99, 235, 0.1),
+      0 12px 26px rgba(15, 23, 42, 0.05);
+  }
+
+  /* Future = нейтрально, тонко */
+  .item.future .dot {
+    background: rgba(15, 23, 42, 0.12);
+  }
+  .item.future .price {
+    color: rgba(37, 99, 235, 0.85);
+  }
+
+  .footer {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .goal {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: rgba(15, 23, 42, 0.65);
+    text-align: center;
+  }
+
+  .goal b {
+    color: rgba(15, 23, 42, 0.9);
+    font-weight: 950;
+  }
+
+  @media (max-width: 980px) {
+    .wrap {
+      padding: 16px;
+      border-radius: 18px;
+    }
+    .title {
+      font-size: 16px;
+    }
+  }
+</style>
