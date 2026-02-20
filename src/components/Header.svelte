@@ -5,10 +5,12 @@
   const BRAND = "FLYANGT";
 
   const nav = [
-    { label: "Fleet", href: "/fleet" },
+    // { label: "Fleet", href: "/fleet" },
     { label: "Tokenization", href: "/tokenization" },
-    { label: "Roadmap", href: "/roadmap" },
+    { label: "Showroom", href: "/showroom" },
+    { label: "Vision", href: "/vision" },
     { label: "Blog", href: "/blog" },
+    { label: "Hub", href: "/app/dashboard" },
   ];
 
   let mobileOpen = false;
@@ -21,17 +23,14 @@
     mobileOpen = false;
   }
 
-  // закрывать меню при переходе по роуту
   $: $page.url.pathname, (mobileOpen = false);
 
   onMount(() => {
     const onResize = () => {
-      // если уходим на десктоп — закрыть меню
       if (window.innerWidth > 860) mobileOpen = false;
     };
     window.addEventListener("resize", onResize);
 
-    // ESC закрывает меню
     const onKeyDown = (e: any) => {
       if (e.key === "Escape") mobileOpen = false;
     };
@@ -52,7 +51,6 @@
       {BRAND}
     </a>
 
-    <!-- Desktop nav -->
     <nav class="nav" aria-label="Primary">
       {#each nav as item}
         <a
@@ -79,7 +77,6 @@
       {/if}
     </nav>
 
-    <!-- Mobile burger -->
     <button
       class="burger"
       type="button"
@@ -93,7 +90,6 @@
     </button>
   </div>
 
-  <!-- Mobile drawer -->
   {#if mobileOpen}
     <div class="overlay" aria-hidden="false">
       <button
@@ -134,32 +130,52 @@
 </header>
 
 <style>
-  .header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: rgba(248, 250, 252, 0.92);
-    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-    overflow: visible;
-  }
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  overflow: visible;
 
-  .glow {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-        900px 200px at 25% 0%,
-        rgba(37, 99, 235, 0.16),
-        transparent 55%
-      ),
-      radial-gradient(
-        700px 200px at 75% 0%,
-        rgba(99, 102, 241, 0.12),
-        transparent 55%
-      );
-    filter: blur(6px);
-    opacity: 0.9;
-  }
+  /* glass */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.82) 0%,
+      rgba(255, 255, 255, 0.62) 100%
+    ),
+    radial-gradient(
+      900px 220px at 30% 0%,
+      rgba(185, 226, 255, 0.28),
+      transparent 60%
+    );
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+}
+
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      900px 240px at 25% 0%,
+      rgba(37, 99, 235, 0.18),
+      transparent 58%
+    ),
+    radial-gradient(
+      800px 240px at 75% 0%,
+      rgba(56, 189, 248, 0.14),
+      transparent 60%
+    );
+
+  filter: blur(10px);
+  opacity: 1;
+}
   .login-btn {
     margin-left: 10px;
     display: inline-flex;
