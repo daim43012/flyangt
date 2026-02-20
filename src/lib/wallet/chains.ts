@@ -12,3 +12,9 @@ export function isPolygon(chainId: string | number | null | undefined) {
   if (typeof chainId === "string") return chainId.toLowerCase() === POLYGON.chainIdHex;
   return chainId === POLYGON.chainIdDec;
 }
+export function chainKey(chainId: string | null) {
+  if (!chainId) return null;
+  if (chainId.toLowerCase() === "0x89") return "polygon";
+  if (chainId.toLowerCase() === "0x7a69") return "localhost"; // hardhat
+  return null;
+}
