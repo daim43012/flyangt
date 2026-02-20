@@ -1,9 +1,11 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { wallet } from "$lib/wallet/wallet.store";
+  import Buy from "./Buy.svelte";
 
   $: user = $page.data?.user;
   $: email = user?.email ?? null;
+  let buyOpen = false;
 
   function displayName() {
     if (!email) return "Aviation Enthusiast";
@@ -19,22 +21,22 @@
   <div class="hero-bg" aria-hidden="true"></div>
 
   <div class="hero-content">
-    <div class="hero-kicker">DASHBOARD</div>
-
     <h1 class="hero-title">
-      CLEAR SKIES{#if email}, <span class="accent">{displayName().toUpperCase()}</span>{/if}
+      CLEAR SKIES{#if email}, <span class="accent"
+          >{displayName().toUpperCase()}</span
+        >{/if}
     </h1>
 
     <p class="hero-sub">
-      Unified access to aircraft tokenization, liquidity pools and on-chain rewards.
+      Unified access to aircraft tokenization, liquidity pools and on-chain
+      rewards.
     </p>
 
     <div class="hero-actions">
       <button
         class="btn btn-primary"
         type="button"
-        on:click={buyToken}
-        disabled={$wallet.status === "connecting"}
+        on:click={() => (buyOpen = true)}
       >
         Buy ANGT
       </button>
@@ -43,6 +45,12 @@
     </div>
   </div>
 </section>
+{#if buyOpen}
+  <Buy
+    on:close={() => (buyOpen = false)}
+    on:swapped={(e) => console.log(e.detail.hash)}
+  />
+{/if}
 
 <style>
   .hero-card {
@@ -54,17 +62,23 @@
       0 30px 80px rgba(15, 23, 42, 0.1),
       0 10px 25px rgba(15, 23, 42, 0.06);
     overflow: hidden;
-  width: 100%;
+    width: 100%;
   }
-
 
   .hero-bg {
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(1200px 420px at 25% 20%, rgba(37, 99, 235, 0.20), transparent 60%),
-      radial-gradient(1100px 420px at 80% 20%, rgba(124, 58, 237, 0.18), transparent 62%),
-      linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(99, 102, 241, 0.06));
+    background: radial-gradient(
+        1200px 420px at 25% 20%,
+        rgba(37, 99, 235, 0.2),
+        transparent 60%
+      ),
+      radial-gradient(
+        1100px 420px at 80% 20%,
+        rgba(124, 58, 237, 0.18),
+        transparent 62%
+      ),
+      linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.06));
     filter: saturate(1.05);
     pointer-events: none;
   }
@@ -90,7 +104,7 @@
     font-weight: 950;
     letter-spacing: -0.03em;
     color: #0f172a;
-    font-style: italic; /* как на рефе */
+    font-style: italic;
   }
 
   .accent {
@@ -134,7 +148,11 @@
     user-select: none;
     text-decoration: none;
 
-    transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+    transition:
+      transform 0.12s ease,
+      filter 0.12s ease,
+      background 0.12s ease,
+      border-color 0.12s ease;
     backdrop-filter: blur(10px);
   }
 
@@ -170,8 +188,14 @@
   }
 
   @media (max-width: 980px) {
-    .hero-card { border-radius: 22px; }
-    .hero-content { padding: 18px; }
-    .hero-title { font-size: 22px; }
+    .hero-card {
+      border-radius: 22px;
+    }
+    .hero-content {
+      padding: 18px;
+    }
+    .hero-title {
+      font-size: 22px;
+    }
   }
 </style>
