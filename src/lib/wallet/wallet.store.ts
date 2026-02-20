@@ -4,13 +4,15 @@ import {
   ensurePolygon,
   getPreferredProvider,
   savePreferredProvider,
-  type Eip1193Provider
+  type Eip1193Provider,
+  startEip6963Discovery,
+  getAllProviders,
 } from "./provider";
 import { isPolygon } from "./chains";
-import { startEip6963Discovery, getAllProviders } from "./provider";
 
 type WalletStatus =
   | "idle"
+  | "initializing"
   | "connecting"
   | "connected"
   | "wrong_network"
@@ -33,8 +35,13 @@ const initial: WalletState = {
   chainId: null,
   provider: null,
   providerId: null,
-  providerName: null
+  providerName: null,
 };
+
+const LS_AUTOCONNECT = "wallet_autoconnect";
+const LS_LOCK = "wallet_locked";
+const LS_PROVIDER_ID = "wallet_provider_id";
+
 function listProviders() {
   return getAllProviders().map(({ id, name, icon }) => ({ id, name, icon }));
 }
@@ -52,6 +59,10 @@ function prettifyError(e: any) {
   return msg;
 }
 
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 function createWallet() {
   const store = writable<WalletState>(initial);
   const { subscribe, set, update } = store;
@@ -62,6 +73,10 @@ function createWallet() {
   let onChainChanged: (chainId: string) => void;
   let onDisconnect: () => void;
 
+  function isLocked() {
+    return browser && localStorage.getItem(LS_LOCK) === "1";
+  }
+
   function bindEvents(provider: Eip1193Provider) {
     if (handlersBound || !provider.on) return;
 
@@ -71,23 +86,32 @@ function createWallet() {
       update((s) => ({
         ...s,
         address: addr,
-        status: addr ? (isPolygon(s.chainId) ? "connected" : "wrong_network") : "idle"
+        status: addr
+          ? isPolygon(s.chainId)
+            ? "connected"
+            : "wrong_network"
+          : "idle",
       }));
 
-      if (!addr && browser) localStorage.removeItem("wallet_autoconnect");
+      if (!addr && browser) localStorage.removeItem(LS_AUTOCONNECT);
     };
 
     onChainChanged = (chainId: string) => {
       update((s) => ({
         ...s,
         chainId,
-        status: s.address ? (isPolygon(chainId) ? "connected" : "wrong_network") : "idle"
+        status: s.address
+          ? isPolygon(chainId)
+            ? "connected"
+            : "wrong_network"
+          : "idle",
       }));
     };
 
     onDisconnect = () => {
       set({ ...initial, status: "idle" });
-      if (browser) localStorage.removeItem("wallet_autoconnect");
+      if (browser) localStorage.removeItem(LS_AUTOCONNECT);
+      // lock снимаем только через кнопку Disconnect
     };
 
     provider.on("accountsChanged", onAccountsChanged);
@@ -105,7 +129,10 @@ function createWallet() {
     handlersBound = false;
   }
 
-  async function refresh(provider: Eip1193Provider, providerMeta?: { id?: string; name?: string }) {
+  async function refresh(
+    provider: Eip1193Provider,
+    providerMeta?: { id?: string; name?: string },
+  ) {
     let chainId: string | null = null;
     let address: string | null = null;
 
@@ -123,29 +150,64 @@ function createWallet() {
     }
 
     set({
-      status: address ? (isPolygon(chainId) ? "connected" : "wrong_network") : "idle",
+      status: address
+        ? isPolygon(chainId)
+          ? "connected"
+          : "wrong_network"
+        : "idle",
       address,
       chainId,
       provider,
       providerId: providerMeta?.id ?? null,
-      providerName: providerMeta?.name ?? null
+      providerName: providerMeta?.name ?? null,
     });
 
     bindEvents(provider);
   }
 
-  function pickProvider(): { provider: Eip1193Provider; id: string; name: string } | null {
+  function pickProviderNow(): {
+    provider: Eip1193Provider;
+    id: string;
+    name: string;
+  } | null {
     const selected = getPreferredProvider();
     if (!selected?.provider) return null;
+
     savePreferredProvider(selected.id);
-    return { provider: selected.provider, id: selected.id, name: selected.name };
+
+    return {
+      provider: selected.provider,
+      id: selected.id,
+      name: selected.name,
+    };
   }
 
+  async function pickProviderWithRetry(maxMs = 1500) {
+    const saved = browser ? localStorage.getItem(LS_PROVIDER_ID) : null;
+
+    if (!saved) return pickProviderNow();
+
+    const started = Date.now();
+    while (Date.now() - started < maxMs) {
+      const all = getAllProviders();
+      const match = all.find((p) => p.id === saved);
+      if (match?.provider) {
+        savePreferredProvider(match.id);
+        return { provider: match.provider, id: match.id, name: match.name };
+      }
+      await sleep(100);
+    }
+
+    return pickProviderNow();
+  }
   async function init() {
     if (!browser) return;
-startEip6963Discovery();
 
-    const picked = pickProvider();
+    update((s) => ({ ...s, status: "initializing", lastError: undefined }));
+
+    startEip6963Discovery();
+
+    const picked = await pickProviderWithRetry(1800);
     if (!picked) {
       set({ ...initial, status: "no_provider" });
       return;
@@ -159,7 +221,9 @@ startEip6963Discovery();
 
     update((s) => ({ ...s, status: "connecting", lastError: undefined }));
 
-    const picked = pickProvider();
+    startEip6963Discovery();
+
+    const picked = await pickProviderWithRetry(1800);
     if (!picked) {
       set({ ...initial, status: "no_provider" });
       return;
@@ -168,7 +232,9 @@ startEip6963Discovery();
     const provider = picked.provider;
 
     try {
-      const accounts = await provider.request({ method: "eth_requestAccounts" });
+      const accounts = await provider.request({
+        method: "eth_requestAccounts",
+      });
       const address = accounts?.[0] ?? null;
 
       await ensurePolygon(provider);
@@ -176,21 +242,28 @@ startEip6963Discovery();
       const chainId = await provider.request({ method: "eth_chainId" });
 
       set({
-        status: address ? (isPolygon(chainId) ? "connected" : "wrong_network") : "idle",
+        status: address
+          ? isPolygon(chainId)
+            ? "connected"
+            : "wrong_network"
+          : "idle",
         address,
         chainId,
         provider,
         providerId: picked.id,
-        providerName: picked.name
+        providerName: picked.name,
       });
 
       bindEvents(provider);
-      localStorage.setItem("wallet_autoconnect", "1");
+
+      savePreferredProvider(picked.id);
+      localStorage.setItem(LS_AUTOCONNECT, "1");
+      localStorage.setItem(LS_LOCK, "1");
     } catch (e: any) {
       set({
         ...initial,
         status: "error",
-        lastError: prettifyError(e)
+        lastError: prettifyError(e),
       });
     }
   }
@@ -199,14 +272,22 @@ startEip6963Discovery();
     const s = get(store);
     unbindEvents(s.provider);
     set({ ...initial, status: "idle" });
-    if (browser) localStorage.removeItem("wallet_autoconnect");
+
+    if (browser) {
+      localStorage.removeItem(LS_AUTOCONNECT);
+      localStorage.removeItem(LS_LOCK);
+      localStorage.removeItem(LS_PROVIDER_ID);
+    }
   }
 
   async function setProvider(id: string) {
     if (!browser) return;
-    localStorage.setItem("wallet_provider_id", id);
 
-    const picked = pickProvider();
+    if (isLocked()) return;
+
+    localStorage.setItem(LS_PROVIDER_ID, id);
+
+    const picked = await pickProviderWithRetry(1200);
     if (!picked) {
       set({ ...initial, status: "no_provider" });
       return;
@@ -218,7 +299,16 @@ startEip6963Discovery();
     await refresh(picked.provider, { id: picked.id, name: picked.name });
   }
 
-return { subscribe, init, connect, disconnect, refresh, setProvider, listProviders };
+  return {
+    subscribe,
+    init,
+    connect,
+    disconnect,
+    refresh,
+    setProvider,
+    listProviders,
+    isLocked,
+  };
 }
 
 export const wallet = createWallet();
