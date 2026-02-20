@@ -4,8 +4,7 @@
 
 <header class="app-header-wrap">
   <div class="app-header">
-    <div class="left">
-    </div>
+    <div class="left"></div>
 
     <div class="right">
       <ConnectWallet />
@@ -16,6 +15,8 @@
 <style>
   .app-header-wrap {
     padding: 18px 22px 12px;
+    position: relative;
+    z-index: 1000;
   }
 
   .app-header {
