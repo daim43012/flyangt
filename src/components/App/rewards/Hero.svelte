@@ -1,8 +1,3 @@
-<script lang="ts">
-  import { page } from "$app/stores";
-  import { wallet } from "$lib/wallet/wallet.store";
-</script>
-
 <div class="dash">
   <section class="hero">
     <div class="hero-bg" aria-hidden="true"></div>
@@ -15,9 +10,18 @@
         on-chain rewards.
       </p>
 
-      <div class="hero-actions">
-  
+      <!-- ADDED: 12% info -->
+      <div class="yield">
+        <div class="yield-rate">12%</div>
+        <div class="yield-meta">
+          <div class="yield-title">Annual Yield</div>
+          <div class="yield-sub">
+            Fixed staking · Monthly rewards · Capital protected
+          </div>
+        </div>
+      </div>
 
+      <div class="hero-actions">
         <a class="btn ghost" href="/app/finance"> Add Liquidity </a>
       </div>
     </div>
@@ -25,9 +29,7 @@
 </div>
 
 <style>
-  .dash {
-    padding: 22px 22px 40px;
-  }
+
 
   .hero {
     position: relative;
@@ -87,6 +89,43 @@
     margin: 10px 0 0;
     font-size: 14px;
     line-height: 1.5;
+    color: rgba(15, 23, 42, 0.65);
+    max-width: 620px;
+  }
+
+  /* ADDED styles */
+  .yield {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .yield-rate {
+    font-size: 52px;
+    font-weight: 950;
+    letter-spacing: -0.05em;
+    font-style: italic;
+    color: #0f172a;
+    line-height: 1;
+  }
+
+  .yield-meta {
+    display: grid;
+    gap: 5px;
+  }
+
+  .yield-title {
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+  }
+
+  .yield-sub {
+    font-size: 13px;
+    line-height: 1.45;
     color: rgba(15, 23, 42, 0.65);
     max-width: 620px;
   }
@@ -159,6 +198,9 @@
     }
     .hero-title {
       font-size: 22px;
+    }
+    .yield-rate {
+      font-size: 42px;
     }
   }
 </style>
