@@ -6,7 +6,7 @@ import { verifyTaskToken } from "$lib/server/taskToken";
 
 const TASK_KEY = "social_ig";
 const TASK_TITLE = "Instagram visit";
-const AMOUNT = 20;
+const AMOUNT = 75;
 
 export const POST = async ({ request, cookies }: RequestEvent) => {
   const secret = process.env.AIRDROP_TASK_SECRET;
