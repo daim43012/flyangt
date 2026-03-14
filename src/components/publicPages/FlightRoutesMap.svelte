@@ -29,9 +29,14 @@
     { city: "Dubai", country: "UAE", iata: "DXB", lat: 25.2048, lng: 55.2708 }
   ];
 
-  const CRUISE_SPEED_KMH = 370;
-  const FUEL_BURN_KG_PER_H = 30;
-  const OPS_BUFFER_H = 0.25;
+  // ANG specs
+  const CRUISE_SPEED_KMH = 370;     // cruise TAS
+  const FUEL_LPH = 28;              // liters per hour (economy cruise)
+  const FUEL_DENSITY = 0.72;        // kg per liter (MOGAS average)
+  const FUEL_PRICE_EUR = 2.45;      // average MOGAS price in EU (€/L)
+  const SEATS = 5;                  // total seats incl. pilot
+  const OPS_BUFFER_H = 0.25;       // taxi + climb + approach buffer
+  const RANGE_KM = 2500;           // max range
 
   let el: HTMLDivElement | null = null;
 
@@ -74,9 +79,58 @@
     return distanceKm / CRUISE_SPEED_KMH + OPS_BUFFER_H;
   }
 
-  function fuelKg(distanceKm: number) {
-    return Math.round(flightTimeH(distanceKm) * FUEL_BURN_KG_PER_H);
+  function fuelLiters(distanceKm: number) {
+    return flightTimeH(distanceKm) * FUEL_LPH;
   }
+
+  function fuelKg(distanceKm: number) {
+    return Math.round(fuelLiters(distanceKm) * FUEL_DENSITY);
+  }
+
+  function fuelCostEur(distanceKm: number) {
+    return fuelLiters(distanceKm) * FUEL_PRICE_EUR;
+  }
+
+  function costPerSeatEur(distanceKm: number) {
+    return fuelCostEur(distanceKm) / SEATS;
+  }
+
+  function costPerKm(distanceKm: number) {
+    return fuelCostEur(distanceKm) / distanceKm;
+  }
+
+  // Build sorted route data for table
+  type RouteData = {
+    city: string;
+    country: string;
+    iata: string;
+    distKm: number;
+    timeH: number;
+    fuelL: number;
+    costEur: number;
+    perSeat: number;
+    withinRange: boolean;
+  };
+
+  const routes: RouteData[] = DESTINATIONS
+    .map(d => {
+      const km = haversineKm(ORIGIN, d);
+      const t = flightTimeH(km);
+      const fl = fuelLiters(km);
+      const cost = fuelCostEur(km);
+      return {
+        city: d.city,
+        country: d.country,
+        iata: d.iata,
+        distKm: Math.round(km),
+        timeH: t,
+        fuelL: Math.round(fl),
+        costEur: Math.round(cost),
+        perSeat: Math.round(costPerSeatEur(km)),
+        withinRange: km <= RANGE_KM
+      };
+    })
+    .sort((a, b) => a.distKm - b.distKm);
 
   // varied per-route arcs (deterministic)
   function arcPoints(from: { lat: number; lng: number }, to: { lat: number; lng: number }, steps = 80) {
@@ -121,13 +175,17 @@
 
   function popupHtml(dest: { city: string; country: string; iata: string }, km: number) {
     const t = flightTimeH(km);
-    const f = fuelKg(km);
+    const fl = Math.round(fuelLiters(km));
+    const cost = Math.round(fuelCostEur(km));
+    const perSeat = Math.round(costPerSeatEur(km));
+    const cKm = costPerKm(km);
+    const within = km <= RANGE_KM;
 
     return `
       <div class="rp">
         <div class="rp__top">
           <div class="rp__route">${ORIGIN.code} <span class="rp__arrow">→</span> ${dest.iata}</div>
-          <div class="rp__tag">European Aviation</div>
+          <div class="rp__tag">${within ? 'Non-stop' : 'Fuel stop required'}</div>
         </div>
         <div class="rp__title">${ORIGIN.name}</div>
         <div class="rp__subtitle">${dest.city}, ${dest.country}</div>
@@ -135,19 +193,34 @@
         <div class="rp__metrics">
           <div class="rp__m">
             <div class="rp__k">Distance</div>
-            <div class="rp__v">${Math.round(km)} km</div>
+            <div class="rp__v">${Math.round(km).toLocaleString()} km</div>
           </div>
           <div class="rp__m">
             <div class="rp__k">Flight time</div>
             <div class="rp__v">${formatDuration(t)}</div>
           </div>
           <div class="rp__m">
-            <div class="rp__k">Fuel estimate</div>
-            <div class="rp__v">${f.toLocaleString()} kg</div>
+            <div class="rp__k">Fuel</div>
+            <div class="rp__v">${fl} L</div>
           </div>
         </div>
 
-        <div class="rp__foot">Cruise ${CRUISE_SPEED_KMH} km/h • Buffer ${Math.round(OPS_BUFFER_H * 60)} min</div>
+        <div class="rp__costs">
+          <div class="rp__m">
+            <div class="rp__k">Fuel cost</div>
+            <div class="rp__v rp__v--accent">€${cost}</div>
+          </div>
+          <div class="rp__m">
+            <div class="rp__k">Per seat (${SEATS})</div>
+            <div class="rp__v rp__v--accent">€${perSeat}</div>
+          </div>
+          <div class="rp__m">
+            <div class="rp__k">Per km</div>
+            <div class="rp__v rp__v--accent">€${cKm.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div class="rp__foot">ANG · Cruise ${CRUISE_SPEED_KMH} km/h · ${FUEL_LPH} L/h · MOGAS €${FUEL_PRICE_EUR}/L</div>
       </div>
     `;
   }
@@ -384,13 +457,80 @@
   <div class="map-frame" bind:this={el} aria-label="Larnaca routes map"></div>
   <div class="map-hud">
     <div class="map-hud__title">Routes from Larnaca</div>
-    <div class="map-hud__sub">Hover a city or path to view range, time, fuel</div>
+    <div class="map-hud__sub">Hover a city or path to view range, time, fuel & cost</div>
+  </div>
+</div>
+
+<!-- Route cost table -->
+<div class="rt-wrap">
+  <div class="rt-header">
+    <div class="rt-label">Flight Cost Calculator</div>
+    <h3 class="rt-title">Route economics from Larnaca</h3>
+    <p class="rt-sub">
+      Fuel cost estimates based on ANG specs: cruise {CRUISE_SPEED_KMH} km/h, consumption {FUEL_LPH} L/h,
+      MOGAS at €{FUEL_PRICE_EUR}/L. {SEATS} seats including pilot.
+    </p>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="rt-stats">
+    <div class="rt-stat">
+      <div class="rt-stat-val">{FUEL_LPH} L/h</div>
+      <div class="rt-stat-key">Fuel burn</div>
+    </div>
+    <div class="rt-stat">
+      <div class="rt-stat-val">{CRUISE_SPEED_KMH} km/h</div>
+      <div class="rt-stat-key">Cruise TAS</div>
+    </div>
+    <div class="rt-stat">
+      <div class="rt-stat-val">{RANGE_KM.toLocaleString()} km</div>
+      <div class="rt-stat-key">Max range</div>
+    </div>
+    <div class="rt-stat">
+      <div class="rt-stat-val">€{FUEL_PRICE_EUR}/L</div>
+      <div class="rt-stat-key">MOGAS price</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="rt-table">
+    <div class="rt-thead">
+      <span class="rt-th rt-th-route">Route</span>
+      <span class="rt-th">Distance</span>
+      <span class="rt-th">Time</span>
+      <span class="rt-th">Fuel</span>
+      <span class="rt-th">Cost</span>
+      <span class="rt-th">Per seat</span>
+    </div>
+    {#each routes as r}
+      <div class="rt-row" class:rt-row-far={!r.withinRange}>
+        <span class="rt-td rt-td-route">
+          <span class="rt-iata">{ORIGIN.code}</span>
+          <span class="rt-arrow">→</span>
+          <span class="rt-iata">{r.iata}</span>
+          <span class="rt-city">{r.city}</span>
+          {#if !r.withinRange}<span class="rt-stop-badge">stop</span>{/if}
+        </span>
+        <span class="rt-td">{r.distKm.toLocaleString()} km</span>
+        <span class="rt-td">{formatDuration(r.timeH)}</span>
+        <span class="rt-td">{r.fuelL} L</span>
+        <span class="rt-td rt-td-cost">€{r.costEur}</span>
+        <span class="rt-td rt-td-seat">€{r.perSeat}</span>
+      </div>
+    {/each}
+  </div>
+
+  <div class="rt-disclaimer">
+    Estimates only. Actual values depend on wind, altitude, weight, and route. MOGAS price varies by region.
+    Routes beyond {RANGE_KM.toLocaleString()} km require a fuel stop.
   </div>
 </div>
 
 <style>
   .map-card {
     position: relative;
+    isolation: isolate;
+    z-index: 0;
     width: min(1200px, 92vw);
     margin: 28px auto 0;
     height: clamp(340px, 42vw, 520px);
@@ -515,6 +655,20 @@
   }
   :global(.rp__k) { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(15, 23, 42, 0.56); }
   :global(.rp__v) { margin-top: 6px; font-size: 12px; font-weight: 850; color: rgba(15, 23, 42, 0.88); }
+  :global(.rp__costs) {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  :global(.rp__costs .rp__m) {
+    background: rgba(176, 141, 87, 0.06);
+    border-color: rgba(176, 141, 87, 0.14);
+  }
+  :global(.rp__v--accent) {
+    color: rgba(120, 86, 36, 0.92) !important;
+    font-weight: 900 !important;
+  }
   :global(.rp__foot) { margin-top: 10px; font-size: 10px; color: rgba(15, 23, 42, 0.50); }
 
   :global(.leaflet-control-zoom) {
@@ -536,4 +690,236 @@
     color: #0f172a !important;
   }
   :global(.leaflet-control-zoom a:hover) { background: rgba(255, 255, 255, 0.92) !important; }
+
+  /* ========================
+     ROUTE TABLE
+  ======================== */
+  .rt-wrap {
+    width: min(1200px, 92vw);
+    margin: 32px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .rt-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .rt-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .rt-title {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    line-height: 1.1;
+  }
+
+  .rt-sub {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    max-width: 72ch;
+  }
+
+  /* Stats row */
+  .rt-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .rt-stat {
+    padding: 18px 16px;
+    border-radius: 20px;
+    background: rgba(176,141,87,0.05);
+    border: 1px solid rgba(176,141,87,0.16);
+    text-align: center;
+    transition: transform 0.35s ease;
+  }
+
+  .rt-stat:hover {
+    transform: translateY(-2px);
+  }
+
+  .rt-stat-val {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-family: var(--font-heading);
+    background: linear-gradient(135deg, var(--accent-light), var(--accent), var(--accent-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .rt-stat-key {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Table */
+  .rt-table {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 18px 60px rgba(18,20,22,0.07), 0 6px 18px rgba(18,20,22,0.05);
+    background: var(--bg-white);
+  }
+
+  .rt-thead {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1fr 0.8fr 0.8fr 0.8fr;
+    gap: 0;
+    padding: 12px 20px;
+    background: rgba(176,141,87,0.05);
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .rt-th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .rt-row {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1fr 0.8fr 0.8fr 0.8fr;
+    gap: 0;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    align-items: center;
+    transition: background 0.25s ease;
+  }
+
+  .rt-row:last-child {
+    border-bottom: none;
+  }
+
+  .rt-row:hover {
+    background: rgba(176,141,87,0.04);
+  }
+
+  .rt-row-far {
+    opacity: 0.7;
+  }
+
+  .rt-td {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .rt-td-route {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .rt-iata {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--text-main);
+  }
+
+  .rt-arrow {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .rt-city {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 4px;
+  }
+
+  .rt-stop-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    color: rgba(239, 68, 68, 0.80);
+  }
+
+  .rt-td-cost {
+    font-weight: 800;
+    color: rgba(120, 86, 36, 0.90);
+  }
+
+  .rt-td-seat {
+    font-weight: 700;
+    color: rgba(120, 86, 36, 0.75);
+  }
+
+  .rt-disclaimer {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    font-style: italic;
+    max-width: 80ch;
+  }
+
+  /* Responsive */
+  @media (max-width: 980px) {
+    .rt-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .rt-title { font-size: 26px; }
+
+    .rt-thead,
+    .rt-row {
+      grid-template-columns: 2fr 1fr 1fr 0.8fr 0.8fr 0.8fr;
+      padding: 10px 14px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .rt-wrap { margin-top: 22px; }
+    .rt-title { font-size: 22px; }
+    .rt-stat-val { font-size: 20px; }
+
+    .rt-thead,
+    .rt-row {
+      grid-template-columns: 1.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+      font-size: 11px;
+      padding: 9px 12px;
+    }
+
+    /* hide per-seat on small screens */
+    .rt-th:last-child,
+    .rt-td-seat {
+      display: none;
+    }
+
+    .rt-td { font-size: 12px; }
+    .rt-iata { font-size: 11px; }
+    .rt-city { display: none; }
+  }
 </style>
