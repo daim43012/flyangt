@@ -1,206 +1,189 @@
 <div class="dash">
-  <section class="hero">
-    <div class="hero-bg" aria-hidden="true"></div>
-
-    <div class="hero-main">
-      <h1 class="hero-title">GET YOUR REWARDS</h1>
-
-      <p class="hero-sub">
-        Your unified access to aircraft tokenization, liquidity pools and
-        on-chain rewards.
-      </p>
-
-      <!-- ADDED: 12% info -->
-      <div class="yield">
-        <div class="yield-rate">12%</div>
-        <div class="yield-meta">
-          <div class="yield-title">Annual Yield</div>
-          <div class="yield-sub">
-            Fixed staking · Monthly rewards · Capital protected
-          </div>
+  <section class="card">
+    <div class="top">
+      <div class="left">
+        <div class="k">ANNUAL YIELD</div>
+        <div class="v">
+          12<span class="t">% APY</span>
         </div>
       </div>
-
-      <div class="hero-actions">
-        <a class="btn ghost" href="/app/finance"> Add Liquidity </a>
-      </div>
     </div>
+
+    <div class="mid">
+      <div class="k">Staking Terms</div>
+      <div class="meta">Fixed · Monthly rewards</div>
+    </div>
+
+    <div class="desc">
+      Your tokens accumulate yield continuously. Staking rewards and
+      withdrawal activate immediately after the ANGT token listing.
+    </div>
+
+    <button class="claim disabled" type="button" disabled>
+      Withdraw Rewards →
+    </button>
   </section>
 </div>
 
 <style>
+  .dash {
+    width: 100%;
+  }
 
-
-  .hero {
+  .card {
     position: relative;
     border-radius: 26px;
-    padding: 26px;
-    overflow: hidden;
+    padding: 22px 22px 18px;
 
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+
     box-shadow:
-      0 22px 60px rgba(15, 23, 42, 0.1),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
 
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    height: 100%;
+    min-height: 188px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
   }
 
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        1200px 420px at 20% 10%,
-        rgba(37, 99, 235, 0.34),
-        transparent 55%
-      ),
-      radial-gradient(
-        900px 360px at 70% 30%,
-        rgba(99, 102, 241, 0.24),
-        transparent 60%
-      ),
-      linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(99, 102, 241, 0.06));
-    filter: saturate(1.05);
+  .card::before {
+    content: none;
   }
 
-  .hero-main {
+  /* TOP */
+  .top {
     position: relative;
-    max-width: 820px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-items: start;
   }
 
-  .hero-title {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
+  .left {
+    display: grid;
+    gap: 10px;
   }
 
-  .accent {
-    background: linear-gradient(90deg, #2563eb, #6366f1);
+  .k {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* VALUE */
+  .v {
+    font-family: var(--font-heading);
+    font-size: 46px;
+    font-weight: 600;
+    letter-spacing: -0.05em;
+    line-height: 1;
+
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+
     -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
   }
 
-  .hero-sub {
-    margin: 10px 0 0;
+  .t {
     font-size: 14px;
-    line-height: 1.5;
-    color: rgba(15, 23, 42, 0.65);
-    max-width: 620px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    -webkit-text-fill-color: var(--text-muted);
+    color: var(--text-muted);
   }
 
-  /* ADDED styles */
-  .yield {
-    margin-top: 14px;
+  /* MID */
+  .mid {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-
-  .yield-rate {
-    font-size: 52px;
-    font-weight: 950;
-    letter-spacing: -0.05em;
-    font-style: italic;
-    color: #0f172a;
-    line-height: 1;
-  }
-
-  .yield-meta {
-    display: grid;
-    gap: 5px;
-  }
-
-  .yield-title {
-    font-size: 14px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: #0f172a;
-  }
-
-  .yield-sub {
-    font-size: 13px;
-    line-height: 1.45;
-    color: rgba(15, 23, 42, 0.65);
-    max-width: 620px;
-  }
-
-  .hero-actions {
-    margin-top: 18px;
-    display: flex;
+    justify-content: space-between;
     gap: 12px;
-    flex-wrap: wrap;
+    margin-top: 6px;
   }
 
-  .btn {
-    height: 40px;
-    padding: 0 18px;
-    border-radius: 999px;
+  .meta {
     font-size: 12px;
-    font-weight: 900;
-    letter-spacing: -0.01em;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
 
-    border: 1px solid rgba(15, 23, 42, 0.1);
+  /* DESC */
+  .desc {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--text-muted);
+    letter-spacing: -0.01em;
+  }
+
+  /* CLAIM */
+  .claim {
+    height: 42px;
+    width: 100%;
+    border-radius: 999px;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
 
-    cursor: pointer;
-    user-select: none;
-    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+
+    border: 1px solid var(--border-soft);
+    background: rgba(15, 23, 42, 0.02);
+    color: var(--text-muted);
+
+    box-shadow:
+      0 18px 60px rgba(18, 20, 22, 0.06),
+      0 6px 18px rgba(18, 20, 22, 0.04);
+
+    cursor: not-allowed;
 
     transition:
-      transform 0.12s ease,
-      filter 0.12s ease,
-      background 0.12s ease,
-      border-color 0.12s ease;
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
   }
 
-  .btn.primary {
-    background: #0f172a;
-    color: #fff;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
-  }
-
-  .btn.primary:hover {
-    filter: brightness(1.08);
-  }
-
-  .btn.primary:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
-
-  .btn.ghost {
-    background: rgba(255, 255, 255, 0.78);
-    color: #0f172a;
-  }
-
-  .btn.ghost:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: rgba(15, 23, 42, 0.14);
-    transform: translateY(-1px);
+  .claim.disabled {
+    opacity: 0.6;
   }
 
   @media (max-width: 980px) {
-    .dash {
-      padding: 14px 14px 30px;
+    .card {
+      padding: 16px;
+      border-radius: 22px;
+      min-height: 0;
     }
-    .hero {
-      padding: 18px;
-      border-radius: 20px;
+
+    .v {
+      font-size: 30px;
     }
-    .hero-title {
-      font-size: 22px;
-    }
-    .yield-rate {
-      font-size: 42px;
+
+    .t {
+      font-size: 12px;
     }
   }
 </style>
