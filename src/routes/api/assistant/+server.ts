@@ -2,12 +2,8 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-import { ANG01_CONTEXT_RU, ANG01_CONTEXT_EN } from "$lib/prompts/ang01Context";
-import { SYSTEM_PROMPT_EN, SYSTEM_PROMPT_RU } from "$lib/prompts/assistantSimple";
-
-function detectLang(text: string): "ru" | "en" {
-  return /[а-яё]/i.test(text) ? "ru" : "en";
-}
+import { ANG01_CONTEXT_EN } from "$lib/prompts/ang01Context";
+import { SYSTEM_PROMPT_EN } from "$lib/prompts/assistantSimple";
 
 type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
 
@@ -20,25 +16,18 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 
     const body = await request.json();
     const prompt: string = body?.prompt ?? "";
-    const langIn: string | undefined = body?.lang;
     const historyRaw: ChatMsg[] = Array.isArray(body?.history) ? body.history : [];
 
     if (!prompt.trim()) {
       return json({ error: "Missing prompt" }, { status: 400 });
     }
 
-    const lang: "ru" | "en" =
-      langIn === "ru" || langIn === "en" ? langIn : detectLang(prompt);
-
-    const systemPrompt = lang === "ru" ? SYSTEM_PROMPT_RU : SYSTEM_PROMPT_EN;
-    const projectContext = lang === "ru" ? ANG01_CONTEXT_RU : ANG01_CONTEXT_EN;
-
-    // ограничим историю, чтобы не раздувать токены
+    // limit history to control token usage
     const history = historyRaw.slice(-12);
 
     const messages: ChatMsg[] = [
-      { role: "system", content: systemPrompt },
-      { role: "system", content: projectContext },
+      { role: "system", content: SYSTEM_PROMPT_EN },
+      { role: "system", content: ANG01_CONTEXT_EN },
       ...history,
       { role: "user", content: prompt }
     ];
@@ -53,7 +42,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
         model: "gpt-4.1-mini",
         messages,
         temperature: 0.4,
-        max_tokens: 450
+        max_tokens: 700
       })
     });
 
@@ -65,7 +54,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
       return json({ error: "OpenAI error", details: data }, { status: 500 });
     }
 
-    return json({ reply, lang });
+    return json({ reply, lang: "en" });
   } catch (err) {
     console.error("Server error:", err);
     return json({ error: "Internal server error" }, { status: 500 });
