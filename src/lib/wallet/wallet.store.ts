@@ -8,7 +8,10 @@ import {
   startEip6963Discovery,
   getAllProviders,
 } from "./provider";
-import { isPolygon } from "./chains";
+import { isPolygon, normalizeChainId } from "./chains";
+import { disconnectWalletConnect } from "./walletconnect";
+import { clog } from "$lib/utils/clientLog";
+import { pushAdvisorError } from "$lib/stores/advisor";
 
 type WalletStatus =
   | "idle"
@@ -49,12 +52,44 @@ function listProviders() {
 function prettifyError(e: any) {
   const code = e?.code;
   const msg = String(e?.message ?? e ?? "Wallet error");
+  const lower = msg.toLowerCase();
 
-  if (code === 4001) return "You canceled the request.";
+  if (code === 4001 || lower.includes("user rejected")) return "You cancelled the request.";
 
-  if (code === 4100 || msg.toLowerCase().includes("not been authorized")) {
-    return "Wallet is not authorized. Please click Connect and approve access in the wallet.";
+  if (lower.includes("page restored from cache") || lower.includes("restored from cache")) {
+    return "Connection interrupted. Please tap Connect again.";
   }
+
+  if (code === 4100 || lower.includes("not been authorized")) {
+    return "Wallet not authorized. Click Connect and approve in your wallet.";
+  }
+
+  // RPC / network failures
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("network error") ||
+    lower.includes("rpc") ||
+    lower.includes("eth_chainid") ||
+    lower.includes("polygon-rpc") ||
+    lower.includes("request failed") ||
+    lower.includes("could not detect network") ||
+    lower.includes("timeout")
+  ) {
+    return "Network error. Please switch to Polygon in your wallet and retry.";
+  }
+
+  // Chain switch rejected
+  if (code === 4902) {
+    return "Polygon network not found. Add it in your wallet settings.";
+  }
+
+  // Unknown provider / method errors
+  if (lower.includes("unsupported method") || lower.includes("not supported")) {
+    return "Method not supported by your wallet. Try a different wallet.";
+  }
+
+  // Keep short — strip long technical details
+  if (msg.length > 120) return "Connection failed. Check your wallet and retry.";
 
   return msg;
 }
@@ -96,19 +131,27 @@ function createWallet() {
       if (!addr && browser) localStorage.removeItem(LS_AUTOCONNECT);
     };
 
-    onChainChanged = (chainId: string) => {
-      update((s) => ({
-        ...s,
+    onChainChanged = (rawChainId: any) => {
+      const chainId = normalizeChainId(rawChainId);
+      const s = get(store);
+      const polygon = isPolygon(chainId);
+      update((prev) => ({
+        ...prev,
         chainId,
-        status: s.address
-          ? isPolygon(chainId)
-            ? "connected"
-            : "wrong_network"
+        status: prev.address
+          ? polygon ? "connected" : "wrong_network"
           : "idle",
       }));
+      if (s.address && !polygon) {
+        pushAdvisorError("You switched to the wrong network. Please switch back to Polygon.");
+      }
     };
 
     onDisconnect = () => {
+      const s = get(store);
+      if (s.providerId === "walletconnect") {
+        disconnectWalletConnect().catch(() => {});
+      }
       set({ ...initial, status: "idle" });
       if (browser) localStorage.removeItem(LS_AUTOCONNECT);
       // lock снимаем только через кнопку Disconnect
@@ -137,7 +180,8 @@ function createWallet() {
     let address: string | null = null;
 
     try {
-      chainId = await provider.request({ method: "eth_chainId" });
+      const raw = await provider.request({ method: "eth_chainId" });
+      chainId = normalizeChainId(raw);
     } catch {
       chainId = null;
     }
@@ -213,22 +257,43 @@ function createWallet() {
       return;
     }
 
+    // WalletConnect: не инициализируем при старте, если ранее не было подключения —
+    // иначе будет лишний сетевой запрос к WC-серверам при каждом открытии страницы.
+    if (picked.id === "walletconnect" && !localStorage.getItem(LS_AUTOCONNECT)) {
+      set({ ...initial, status: "idle" });
+      return;
+    }
+
     await refresh(picked.provider, { id: picked.id, name: picked.name });
+
+    // Auto-switch to Polygon on page reload if user was previously connected
+    const s = get(store);
+    if (s.address && !isPolygon(s.chainId)) {
+      try {
+        await ensurePolygon(picked.provider);
+        await refresh(picked.provider, { id: picked.id, name: picked.name });
+      } catch {
+        // user rejected — stay on wrong_network
+      }
+    }
   }
 
   async function connect() {
     if (!browser) return;
 
+    clog.info("wallet", "connect: start");
     update((s) => ({ ...s, status: "connecting", lastError: undefined }));
 
     startEip6963Discovery();
 
     const picked = await pickProviderWithRetry(1800);
     if (!picked) {
+      clog.warn("wallet", "connect: no_provider");
       set({ ...initial, status: "no_provider" });
       return;
     }
 
+    clog.info("wallet", "connect: provider picked", { id: picked.id, name: picked.name });
     const provider = picked.provider;
 
     try {
@@ -236,23 +301,43 @@ function createWallet() {
         method: "eth_requestAccounts",
       });
       const address = accounts?.[0] ?? null;
+      clog.info("wallet", "connect: accounts received", { address: address ?? "null" });
 
-      await ensurePolygon(provider);
+      try {
+        await ensurePolygon(provider);
+      } catch (e: any) {
+        clog.warn("wallet", "connect: ensurePolygon failed", { err: e?.message });
+        // switch failed — we'll detect wrong_network below
+      }
 
-      const chainId = await provider.request({ method: "eth_chainId" });
+      let chainId: string | null = null;
+      try {
+        const raw = await provider.request({ method: "eth_chainId" });
+        chainId = normalizeChainId(raw);
+      } catch (e: any) {
+        clog.warn("wallet", "connect: eth_chainId failed", { err: e?.message });
+      }
+
+      const polygon = isPolygon(chainId);
+      const status = address ? (polygon ? "connected" : "wrong_network") : "idle";
+
+      clog.info("wallet", "connect: done", { status, chainId: chainId ?? "null", polygon });
 
       set({
-        status: address
-          ? isPolygon(chainId)
-            ? "connected"
-            : "wrong_network"
-          : "idle",
+        status,
         address,
         chainId,
         provider,
         providerId: picked.id,
         providerName: picked.name,
+        lastError: address && !polygon
+          ? "Switch to Polygon network in your wallet."
+          : undefined,
       });
+
+      if (address && !polygon) {
+        pushAdvisorError("Wrong network connected. Please switch to Polygon.");
+      }
 
       bindEvents(provider);
 
@@ -260,17 +345,25 @@ function createWallet() {
       localStorage.setItem(LS_AUTOCONNECT, "1");
       localStorage.setItem(LS_LOCK, "1");
     } catch (e: any) {
+      const msg = prettifyError(e);
+      clog.error("wallet", "connect: error", { err: e?.message, code: e?.code, pretty: msg });
       set({
         ...initial,
         status: "error",
-        lastError: prettifyError(e),
+        lastError: msg,
       });
+      pushAdvisorError(`Wallet connection failed: ${msg}`);
     }
   }
 
   async function disconnect() {
     const s = get(store);
     unbindEvents(s.provider);
+
+    if (s.providerId === "walletconnect") {
+      await disconnectWalletConnect();
+    }
+
     set({ ...initial, status: "idle" });
 
     if (browser) {
