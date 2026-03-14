@@ -3,5 +3,5 @@
   import Hero from "./docs/Hero.svelte";
 
 </script>
-<Hero/>
-<Blocks/>
+<div data-tour-page="docs-hero"><Hero/></div>
+<div data-tour-page="docs-grid"><Blocks/></div>
