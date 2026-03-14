@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
   import { get } from "svelte/store";
   import { wallet } from "$lib/wallet/wallet.store";
   import { invalidateAll } from "$app/navigation";
@@ -7,6 +8,8 @@
 
   const tasks = data?.data?.tasks ?? [];
   const referral = data?.data?.referral ?? null;
+  const presaleTotalUsd: number = data?.data?.presaleTotalUsd ?? 0;
+  const presaleThreshold = 500;
 
   const isDone = (key: string) =>
     tasks.find((t: any) => t.key === key && t.completed);
@@ -111,6 +114,18 @@
   let igSecondsLeft = 0;
   let igInterval: ReturnType<typeof setInterval> | null = null;
 
+  const IG_STORAGE_KEY = "airdrop_ig_timer";
+
+  function saveIgState(endsAt: number, token: string) {
+    try {
+      localStorage.setItem(IG_STORAGE_KEY, JSON.stringify({ endsAt, token }));
+    } catch {}
+  }
+
+  function clearIgState() {
+    try { localStorage.removeItem(IG_STORAGE_KEY); } catch {}
+  }
+
   function stopIgTimer() {
     if (igInterval) {
       clearInterval(igInterval);
@@ -118,11 +133,15 @@
     }
   }
 
-  function startIgTimer(totalSeconds = 60) {
+  function startIgTimer(totalSeconds = 60, token?: string) {
     stopIgTimer();
     igSecondsLeft = totalSeconds;
     igBusy = true;
     igCanClaim = false;
+
+    if (token) {
+      saveIgState(Date.now() + totalSeconds * 1000, token);
+    }
 
     igInterval = setInterval(() => {
       igSecondsLeft = Math.max(0, igSecondsLeft - 1);
@@ -130,9 +149,37 @@
         stopIgTimer();
         igBusy = false;
         igCanClaim = true;
+        clearIgState();
       }
     }, 1000);
   }
+
+  function restoreIgTimer() {
+    try {
+      const raw = localStorage.getItem(IG_STORAGE_KEY);
+      if (!raw) return;
+      const { endsAt, token } = JSON.parse(raw);
+      const left = Math.ceil((endsAt - Date.now()) / 1000);
+      if (left <= 0) {
+        igToken = token;
+        igCanClaim = true;
+        clearIgState();
+      } else {
+        igToken = token;
+        startIgTimer(left);
+      }
+    } catch {
+      clearIgState();
+    }
+  }
+
+  onMount(() => {
+    if (!igDone) restoreIgTimer();
+  });
+
+  onDestroy(() => {
+    stopIgTimer();
+  });
 
   async function startInstagramTask() {
     errorMsg = "";
@@ -165,7 +212,7 @@
 
       window.open(d.igUrl, "_blank", "noopener,noreferrer");
 
-      startIgTimer(60);
+      startIgTimer(60, d.token);
     } catch (e: any) {
       stopIgTimer();
       igBusy = false;
@@ -193,7 +240,7 @@
       if (d?.needWaitMs) {
         const sec = Math.ceil(d.needWaitMs / 1000);
         infoMsg = `Wait ${sec}s...`;
-        startIgTimer(sec);
+        startIgTimer(sec, igToken);
         return;
       }
 
@@ -201,7 +248,7 @@
         infoMsg = "Already claimed ✅";
         igDoneLocal = true;
       } else if (d?.claimed) {
-        infoMsg = `Reward added ✅ +${d.amount ?? 20} ANG`;
+        infoMsg = `Reward added ✅ +${d.amount ?? 75} ANG`;
         igDoneLocal = true;
       } else {
         infoMsg = "Done ✅";
@@ -210,6 +257,7 @@
 
       igCanClaim = false;
       stopIgTimer();
+      clearIgState();
 
       await invalidateAll();
     } catch (e: any) {
@@ -240,6 +288,45 @@
       // ignore
     }
   }
+  // --- Presale $500+ task ---
+  let presaleBusy = false;
+  let presaleDoneLocal = false;
+
+  $: presaleDone = isDone("presale_500") || presaleDoneLocal;
+
+  async function claimPresaleTask() {
+    errorMsg = "";
+    infoMsg = "";
+
+    if (!walletDone) {
+      errorMsg = "Complete 'Connect Wallet' task first";
+      return;
+    }
+
+    presaleBusy = true;
+    try {
+      const r = await fetch("/api/airdrop/presale/claim", { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d?.error || d?.message || "Claim error");
+
+      if (d?.alreadyClaimed) {
+        infoMsg = "Already claimed";
+        presaleDoneLocal = true;
+      } else if (d?.claimed) {
+        infoMsg = `Reward added +${d.amount ?? 200} ANG`;
+        presaleDoneLocal = true;
+      } else if (d?.eligible === false) {
+        infoMsg = `Total purchases: $${d.totalUsd ?? 0} / $${d.threshold ?? 500}`;
+      }
+
+      await invalidateAll();
+    } catch (e: any) {
+      errorMsg = String(e?.message ?? e ?? "Error");
+    } finally {
+      presaleBusy = false;
+    }
+  }
+
   let igCode = "";
   let igCodeBusy = false;
   let igCodeDoneLocal = false;
@@ -274,7 +361,7 @@
         infoMsg = "Already claimed ✅";
         igCodeDoneLocal = true;
       } else if (d?.claimed) {
-        infoMsg = `Reward added ✅ +${d.amount ?? 15} ANG`;
+        infoMsg = `Reward added ✅ +${d.amount ?? 50} ANG`;
         igCodeDoneLocal = true;
       }
 
@@ -302,7 +389,7 @@
         <p>Connect your wallet and sign a message to verify ownership.</p>
 
         <div class="tags">
-          <span class="pill">+100 ANG</span>
+          <span class="pill">+50 ANG</span>
           <span class="pill">OFFCHAIN</span>
         </div>
       </div>
@@ -338,10 +425,10 @@
 
       <div class="meta">
         <h3>Complete Profile</h3>
-        <p>Fill in your basic profile information.</p>
+        <p>Fill in your phone, country, and at least one social (Instagram, Telegram, or X).</p>
 
         <div class="tags">
-          <span class="pill">+200 ANG</span>
+          <span class="pill">+100 ANG</span>
           <span class="pill">OFFCHAIN</span>
         </div>
       </div>
@@ -365,7 +452,7 @@
         <p>Open our Instagram, subscribe, then claim reward.</p>
 
         <div class="tags">
-          <span class="pill">+20 ANG</span>
+          <span class="pill">+75 ANG</span>
           <span class="pill">OFFCHAIN</span>
         </div>
       </div>
@@ -412,7 +499,7 @@
         <p>Find the code in our Instagram post comments and enter it here.</p>
 
         <div class="tags">
-          <span class="pill">+15 ANG</span>
+          <span class="pill">+50 ANG</span>
           <span class="pill">OFFCHAIN</span>
         </div>
       </div>
@@ -452,7 +539,7 @@
         </p>
 
         <div class="tags">
-          <span class="pill">+100 ANG</span>
+          <span class="pill">+150 ANG</span>
           <span class="pill">OFFCHAIN</span>
         </div>
       </div>
@@ -468,14 +555,54 @@
           <span class="status todo">Todo</span>
 
           {#if referral?.code}
-            <button class="btn" type="button" on:click={copyReferralLink}>
-              Copy referral link →
-            </button>
+            <a href="/app/referral" class="btn"> Copy referral link → </a>
             <div class="pill" style="margin-top: 8px;">
               Referrals: {referralCount}
             </div>
           {:else}
             <button class="btn" disabled>Referral code not ready</button>
+          {/if}
+        {/if}
+      </div>
+    </article>
+
+    <article class="task" class:task-done={presaleDone}>
+      <div class="icon">💎</div>
+
+      <div class="meta">
+        <h3>Presale Purchase $500+</h3>
+        <p>
+          Purchase $500 or more in the presale via Stripe or on-chain to earn a
+          bonus reward.
+        </p>
+
+        <div class="tags">
+          <span class="pill">+200 ANG</span>
+          <span class="pill">STRIPE + ONCHAIN</span>
+        </div>
+      </div>
+
+      <div class="side">
+        {#if presaleDone}
+          <span class="status done">Done</span>
+          <button class="btn" disabled>Completed</button>
+        {:else}
+          <span class="status todo">Todo</span>
+
+          {#if !walletDone}
+            <button class="btn" disabled>Connect Wallet first</button>
+          {:else if presaleTotalUsd < presaleThreshold}
+            <a class="btn" href="/app/presale">Presale →</a>
+            <div class="pill">${Math.round(presaleTotalUsd)} / ${presaleThreshold} — need ${presaleThreshold - Math.round(presaleTotalUsd)} more</div>
+          {:else}
+            <button
+              class="btn"
+              type="button"
+              on:click={claimPresaleTask}
+              disabled={presaleBusy}
+            >
+              {presaleBusy ? "Claiming..." : "Claim Reward →"}
+            </button>
           {/if}
         {/if}
       </div>
@@ -490,85 +617,7 @@
     gap: 16px;
   }
 
-  .task-done {
-    border-color: rgba(34, 197, 94, 0.35);
-    background: linear-gradient(180deg, rgba(34, 197, 94, 0.06), #ffffff 60%);
-  }
-
-  .task-done .status {
-    background: rgba(34, 197, 94, 0.12);
-    border-color: rgba(34, 197, 94, 0.45);
-    color: #166534;
-  }
-
-  .task-done .status::before {
-    background: #22c55e;
-  }
-
-  .task-done .btn[disabled] {
-    background: linear-gradient(180deg, #22c55e, #16a34a);
-    border-color: rgba(22, 163, 74, 0.9);
-    color: #ffffff;
-    box-shadow: 0 14px 30px rgba(34, 197, 94, 0.35);
-    cursor: default;
-  }
-  .btn.btn-ig {
-    background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af, #515bd4);
-    border: 0;
-    color: #fff;
-  }
-
-  .btn-ig:disabled {
-    opacity: 0.75;
-  }
-
-  .spin {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    border-top-color: rgba(255, 255, 255, 0.95);
-    animation: spin 0.8s linear infinite;
-    margin-right: 8px;
-    vertical-align: -2px;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  .code {
-    height: 40px;
-    width: 160px;
-    border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    padding: 0 14px;
-    font-weight: 900;
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    outline: none;
-  }
-  .code:focus {
-    border-color: rgba(15, 23, 42, 0.35);
-  }
-
-  .task-done .tags .pill:first-child {
-    background: rgba(34, 197, 94, 0.12);
-    border-color: rgba(34, 197, 94, 0.45);
-    color: #166534;
-  }
-
-  .task-done .icon {
-    background: rgba(34, 197, 94, 0.12);
-    border-color: rgba(34, 197, 94, 0.35);
-  }
-
-  .task-done:hover {
-    filter: brightness(1.03);
-  }
-
+  /* HEADER */
   .tasks-head {
     display: flex;
     align-items: center;
@@ -578,57 +627,88 @@
 
   .title {
     margin: 0;
-    font-size: 22px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
   }
 
   .head-pill {
     height: 28px;
   }
 
+  /* GRID */
   .tasks {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
   }
 
+  /* CARD */
   .task {
-    border-radius: 20px;
+    border-radius: 26px;
     padding: 20px;
-    min-height: 150px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+
     box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
+      0 30px 90px rgba(18, 20, 22, 0.06),
+      0 8px 22px rgba(18, 20, 22, 0.04);
+
     display: grid;
     grid-template-columns: 48px 1fr auto;
     gap: 16px;
     align-items: start;
+
     transition:
-      transform 0.12s ease,
-      filter 0.12s ease;
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
   }
 
   .task:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.02);
+    transform: translateY(-6px);
+    box-shadow:
+      0 40px 110px rgba(18, 20, 22, 0.1),
+      0 12px 32px rgba(18, 20, 22, 0.06);
+    border-color: rgba(176, 141, 87, 0.35);
   }
 
+  /* DONE STATE */
+  .task-done {
+    border-color: rgba(34, 197, 94, 0.25);
+    background: linear-gradient(
+      180deg,
+      rgba(34, 197, 94, 0.05),
+      var(--bg-white) 62%
+    );
+  }
+
+  .task-done:hover {
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  /* ICON */
   .icon {
     width: 44px;
     height: 44px;
-    border-radius: 14px;
+    border-radius: 16px;
     display: grid;
     place-items: center;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid var(--border-soft);
+
     font-size: 18px;
   }
 
+  .task-done .icon {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.22);
+  }
+
+  /* META */
   .meta {
     display: grid;
     gap: 8px;
@@ -638,18 +718,19 @@
   .meta h3 {
     margin: 0;
     font-size: 15px;
-    font-weight: 950;
+    font-weight: 600;
     letter-spacing: -0.02em;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
   .meta p {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.45;
-    color: rgba(15, 23, 42, 0.65);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-muted);
   }
 
+  /* TAGS */
   .tags {
     display: flex;
     gap: 8px;
@@ -660,36 +741,55 @@
     height: 26px;
     padding: 0 12px;
     border-radius: 999px;
+
     font-size: 11px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    color: rgba(15, 23, 42, 0.85);
+
+    background: rgba(15, 23, 42, 0.02);
+    border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+
     white-space: nowrap;
   }
 
+  /* reward pill on done */
+  .task-done .tags .pill:first-child {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.22);
+    color: rgba(22, 101, 52, 0.95);
+  }
+
+  /* SIDE */
   .side {
     display: grid;
     justify-items: end;
     gap: 12px;
-    min-width: 160px;
+    min-width: 170px;
   }
 
+  /* STATUS */
   .status {
     height: 26px;
     padding: 0 12px;
     border-radius: 999px;
+
     font-size: 11px;
-    font-weight: 950;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+
     display: inline-flex;
     align-items: center;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: rgba(255, 255, 255, 0.92);
-    color: rgba(15, 23, 42, 0.75);
+
+    border: 1px solid var(--border-soft);
+    background: rgba(15, 23, 42, 0.02);
+    color: var(--text-muted);
   }
 
   .status::before {
@@ -698,34 +798,137 @@
     height: 8px;
     border-radius: 999px;
     margin-right: 8px;
-    background: rgba(15, 23, 42, 0.55);
+    background: rgba(100, 116, 139, 0.65);
   }
 
+  .task-done .status {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.22);
+    color: rgba(22, 101, 52, 0.95);
+  }
+
+  .task-done .status::before {
+    background: rgba(34, 197, 94, 0.95);
+  }
+
+  /* BUTTON */
   .btn {
     height: 40px;
     padding: 0 16px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #0f172a;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
+
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    color: var(--text-main);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    box-shadow:
+      0 18px 60px rgba(18, 20, 22, 0.06),
+      0 6px 18px rgba(18, 20, 22, 0.04);
+
     cursor: pointer;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     transition:
-      transform 0.12s ease,
-      filter 0.12s ease;
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
   }
 
   .btn:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.03);
+    transform: translateY(-3px);
+    box-shadow:
+      0 26px 80px rgba(18, 20, 22, 0.1),
+      0 10px 28px rgba(18, 20, 22, 0.06);
+    border-color: rgba(176, 141, 87, 0.35);
   }
 
+  .btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* DONE button look */
+  .task-done .btn[disabled] {
+    opacity: 1;
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.22);
+    color: rgba(22, 101, 52, 0.95);
+    box-shadow:
+      0 18px 60px rgba(34, 197, 94, 0.12),
+      0 6px 18px rgba(34, 197, 94, 0.08);
+  }
+
+  /* Instagram button: keep brand hint but in-system */
+  .btn.btn-ig {
+    background: rgba(15, 23, 42, 0.02);
+    border-color: rgba(176, 141, 87, 0.25);
+    color: var(--text-main);
+  }
+
+  .btn-ig:disabled {
+    opacity: 0.65;
+  }
+
+  /* spinner (keep) */
+  .spin {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(100, 116, 139, 0.25);
+    border-top-color: rgba(15, 23, 42, 0.55);
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: -2px;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* referral / info pill reused inline */
+  .task-done .pill {
+    border-color: rgba(34, 197, 94, 0.22);
+  }
+
+  /* CODE INPUT */
+  .code {
+    height: 40px;
+    width: 170px;
+    border-radius: 999px;
+
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+
+    padding: 0 14px;
+    font-weight: 600;
+    font-size: 13px;
+
+    outline: none;
+    color: var(--text-main);
+
+    box-shadow:
+      0 18px 60px rgba(18, 20, 22, 0.05),
+      0 6px 18px rgba(18, 20, 22, 0.03);
+  }
+
+  .code::placeholder {
+    color: rgba(100, 116, 139, 0.75);
+  }
+
+  .code:focus {
+    border-color: rgba(176, 141, 87, 0.35);
+  }
+
+  /* RESPONSIVE */
   @media (max-width: 980px) {
     .tasks {
       grid-template-columns: 1fr;
@@ -740,6 +943,7 @@
     .side {
       grid-column: 1 / -1;
       justify-items: start;
+      min-width: 0;
     }
 
     .btn {
@@ -747,7 +951,11 @@
     }
 
     .title {
-      font-size: 18px;
+      font-size: 22px;
+    }
+
+    .code {
+      width: 100%;
     }
   }
 </style>
