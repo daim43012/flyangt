@@ -14,51 +14,31 @@
       id: "kit",
       title: "Kit Acquisition",
       subtitle: "Contract, configuration, logistics",
-      details: [
-        "Configuration and options",
-        "Docs and delivery plan",
-        "Workspace readiness",
-      ],
+      details: ["Configuration and options", "Docs and delivery plan", "Workspace readiness"],
     },
     {
       id: "hub",
       title: "The Hub Build",
       subtitle: "Hangar build, tooling, jigs",
-      details: [
-        "Stations and workflow",
-        "Tooling calibration",
-        "Build schedule baseline",
-      ],
+      details: ["Stations and workflow", "Tooling calibration", "Build schedule baseline"],
     },
     {
       id: "qa",
       title: "QA Gate",
       subtitle: "Engineering oversight and signoffs",
-      details: [
-        "Evidence capture",
-        "Non conformance actions",
-        "Release signoff",
-      ],
+      details: ["Evidence capture", "Non conformance actions", "Release signoff"],
     },
     {
       id: "training",
       title: "Training",
       subtitle: "Type rating, safety, SOP",
-      details: [
-        "SOP and emergency",
-        "Readiness assessment",
-        "Operational handover",
-      ],
+      details: ["SOP and emergency", "Readiness assessment", "Operational handover"],
     },
     {
       id: "service",
       title: "Service",
       subtitle: "Service",
-      details: [
-        "Maintenance schedule",
-        "Parts and bulletins",
-        "Reliability program",
-      ],
+      details: ["Maintenance schedule", "Parts and bulletins", "Reliability program"],
     },
   ];
 
@@ -112,9 +92,7 @@
 
   function syncLeftHeightToRight() {
     if (!lineCardEl || !panelEl) return;
-
     const rightH = panelEl.scrollHeight;
-
     lineCardEl.style.minHeight = `${Math.ceil(rightH) + 2}px`;
   }
 
@@ -128,7 +106,6 @@
     const y = PAD + usable * clamp01(k);
 
     fillH = Math.max(0, y - y0);
-
     planeY = y - PLANE / 2;
   }
 
@@ -151,9 +128,7 @@
   function setupIntersectionObserver(): (() => void) | undefined {
     if (!browser || !panelEl) return;
 
-    const cards = Array.from(
-      panelEl.querySelectorAll<HTMLElement>("[data-step]"),
-    );
+    const cards = Array.from(panelEl.querySelectorAll<HTMLElement>("[data-step]"));
     if (!cards.length) return;
 
     const pickClosestToCenter = () => {
@@ -243,7 +218,7 @@
 
 <section class="build">
   <div class="header">
-    <h2 class="title">AIRCRAFT BUILD ROADMAP</h2>
+    <h2 class="title">Aircraft build roadmap</h2>
     <p class="subtitle">Scroll the page: the plane follows the flight line</p>
   </div>
 
@@ -251,7 +226,7 @@
     <aside class="left">
       <div class="lineCard" bind:this={lineCardEl}>
         <div class="lineTop">
-          <div class="lineLabel">FLIGHT LINE</div>
+          <div class="lineLabel">Flight line</div>
           <div class="linePct">{Math.round(k * 100)}%</div>
         </div>
 
@@ -259,19 +234,12 @@
           <div class="railGlass" aria-hidden="true"></div>
 
           <div class="spine" aria-hidden="true"></div>
-          <div
-            class="spineFill"
-            style="height:{fillH}px"
-            aria-hidden="true"
-          ></div>
+          <div class="spineFill" style="height:{fillH}px" aria-hidden="true"></div>
 
           {#each steps as s, i}
             <!-- svelte-ignore element_invalid_self_closing_tag -->
             <div
-              class={"marker " +
-                (isLit(i) ? "lit" : "") +
-                " " +
-                (i === activeIndex ? "current" : "")}
+              class={"marker " + (isLit(i) ? "lit" : "") + " " + (i === activeIndex ? "current" : "")}
               style="top:{PAD +
                 (railEl
                   ? Math.max(1, railEl.clientHeight - 2 * PAD) *
@@ -304,10 +272,7 @@
       <div class="stack">
         {#each steps as s, i}
           <article
-            class={"card " +
-              (i === activeIndex ? "active" : "") +
-              " " +
-              (isLit(i) ? "lit" : "")}
+            class={"card " + (i === activeIndex ? "active" : "") + " " + (isLit(i) ? "lit" : "")}
             data-step={s.id}
           >
             <div class="cardHead">
@@ -335,38 +300,34 @@
 
 <style>
   .build {
-    padding: 72px 16px 72px;
+    padding: 120px 16px;
     max-width: 1200px;
     margin: 0 auto;
   }
 
   .header {
     text-align: center;
-    margin-bottom: 56px;
+    margin-bottom: 70px;
   }
 
   .title {
-    font-size: 36px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
-    margin: 0;
-    color: #0f172a;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
   .subtitle {
-    margin-top: 8px;
+    margin-top: 16px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .layout {
     display: grid;
     grid-template-columns: 360px 1fr;
-    gap: 26px;
+    gap: 30px;
     align-items: start;
   }
 
@@ -375,6 +336,7 @@
     align-self: start;
   }
 
+  /* LEFT CARD */
   .lineCard {
     position: sticky;
     top: 92px;
@@ -382,68 +344,68 @@
     display: flex;
     flex-direction: column;
 
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 12px 36px rgba(15, 23, 42, 0.06),
-      0 4px 12px rgba(15, 23, 42, 0.04);
-    backdrop-filter: blur(8px);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(10px);
     overflow: hidden;
   }
 
   .lineTop {
-    flex: 0 0 auto;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: 14px 14px 8px;
+    padding: 18px 18px 12px;
   }
 
   .lineLabel {
-    font-size: 10px;
-    letter-spacing: 0.18em;
+    font-size: 11px;
+    letter-spacing: 0.26em;
     text-transform: uppercase;
-    color: #64748b;
-    font-weight: 800;
+    color: var(--text-muted);
+    font-weight: 600;
   }
 
   .linePct {
-    font-size: 11px;
-    font-weight: 900;
-    color: #0f172a;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+
+    color: #1B140B;
+    background: radial-gradient(120% 160% at 20% 10%, rgba(255,255,255,0.90), rgba(255,255,255,0.55));
+    border: 1px solid rgba(176,141,87,0.28);
+    padding: 8px 10px;
     border-radius: 999px;
   }
 
+  /* RAIL */
   .rail {
     position: relative;
-    border-radius: 18px;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    background: radial-gradient(
-        320px 200px at 20% 20%,
-        rgba(56, 189, 248, 0.12),
-        transparent 60%
-      ),
-      linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.01));
+    border-radius: 22px;
+    border: 1px solid var(--border-soft);
 
-    padding: 20px 8px;
+    background:
+      radial-gradient(360px 240px at 22% 20%, rgba(230,210,168,0.35), transparent 62%),
+      linear-gradient(180deg, rgba(18,20,22,0.02), rgba(18,20,22,0.01));
+
+    padding: 20px 10px;
     flex: 1;
     min-height: 0;
     overflow: visible;
+    margin: 0 16px 10px;
   }
 
   .railGlass {
     position: absolute;
     inset: 0;
-    border-radius: 18px;
+    border-radius: 22px;
     pointer-events: none;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.7),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-    opacity: 0.8;
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    opacity: 0.9;
   }
 
   .spine {
@@ -454,7 +416,7 @@
     bottom: 20px;
     width: 6px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.12);
+    background: rgba(18, 20, 22, 0.12);
     z-index: 0;
   }
 
@@ -465,12 +427,15 @@
     top: 20px;
     width: 6px;
     border-radius: 999px;
+
     background: linear-gradient(
       180deg,
-      rgba(56, 189, 248, 1),
-      rgba(99, 102, 241, 0.9)
+      rgba(230,210,168,1),
+      rgba(176,141,87,1),
+      rgba(122,90,45,0.98)
     );
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.2);
+
+    box-shadow: 0 0 18px rgba(176,141,87,0.22);
     z-index: 1;
   }
 
@@ -478,25 +443,27 @@
     position: absolute;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.15);
-    border: 2px solid rgba(15, 23, 42, 0.1);
+    background: rgba(18, 20, 22, 0.14);
+    border: 2px solid rgba(18, 20, 22, 0.10);
     z-index: 2;
-    transition: transform 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   }
 
   .marker.lit {
-    background: rgba(56, 189, 248, 0.95);
-    border-color: rgba(56, 189, 248, 0.35);
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+    background: rgba(176,141,87,0.96);
+    border-color: rgba(176,141,87,0.38);
+    box-shadow: 0 0 16px rgba(176,141,87,0.26);
   }
 
   .marker.current {
-    transform: translate(-50%, -50%) scale(1.22);
+    transform: translate(-50%, -50%) scale(1.18);
+    box-shadow: 0 0 0 8px rgba(176,141,87,0.10), 0 0 18px rgba(176,141,87,0.22);
   }
 
+  /* PLANE */
   .plane {
     position: absolute;
     left: 50%;
@@ -510,26 +477,25 @@
   .planeSticker {
     position: absolute;
     inset: 0;
-    border-radius: 14px;
+    border-radius: 16px;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(56, 189, 248, 0.28);
+
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(176,141,87,0.35);
+
     box-shadow:
-      0 12px 30px rgba(56, 189, 248, 0.18),
-      0 0 0 10px rgba(56, 189, 248, 0.06);
-    backdrop-filter: blur(6px);
+      0 18px 46px rgba(18,20,22,0.12),
+      0 0 0 10px rgba(176,141,87,0.08);
+
+    backdrop-filter: blur(8px);
   }
 
   .planeGlow {
     position: absolute;
     inset: -14px;
-    border-radius: 18px;
-    background: radial-gradient(
-      circle,
-      rgba(56, 189, 248, 0.22),
-      transparent 60%
-    );
+    border-radius: 20px;
+    background: radial-gradient(circle, rgba(176,141,87,0.20), transparent 62%);
   }
 
   .planeSvg {
@@ -539,21 +505,21 @@
   }
 
   .planeFill {
-    fill: rgba(2, 132, 199, 0.95);
+    fill: rgba(122, 90, 45, 0.95);
   }
 
   .lineHint {
-    flex: 0 0 auto;
-    padding: 10px 14px 14px;
-    font-size: 11px;
-    color: #64748b;
+    padding: 12px 18px 18px;
+    font-size: 12px;
+    color: var(--text-muted);
   }
 
   .lineHint span {
-    font-weight: 900;
-    color: #0f172a;
+    font-weight: 700;
+    color: var(--text-main);
   }
 
+  /* RIGHT COLUMN */
   .right {
     display: grid;
     gap: 16px;
@@ -566,119 +532,128 @@
   }
 
   .card {
-    border-radius: 20px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 26px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 14px 40px rgba(15, 23, 42, 0.06),
-      0 4px 14px rgba(15, 23, 42, 0.04);
-    padding: 16px;
+      0 26px 80px rgba(18,20,22,0.08),
+      0 8px 22px rgba(18,20,22,0.06);
+    padding: 18px;
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 34px 110px rgba(18,20,22,0.12),
+      0 10px 30px rgba(18,20,22,0.08);
+    border-color: rgba(176,141,87,0.28);
   }
 
   .card.lit {
-    border-color: rgba(56, 189, 248, 0.14);
-    background: linear-gradient(
-      180deg,
-      rgba(56, 189, 248, 0.045),
-      rgba(99, 102, 241, 0.02)
-    );
+    border-color: rgba(176,141,87,0.18);
+    background:
+      radial-gradient(520px 260px at 18% 0%, rgba(230,210,168,0.35), transparent 62%),
+      var(--bg-white);
   }
 
   .card.active {
-    border-color: rgba(56, 189, 248, 0.26);
+    border-color: rgba(176,141,87,0.32);
     box-shadow:
-      0 20px 60px rgba(15, 23, 42, 0.1),
-      0 0 0 8px rgba(56, 189, 248, 0.08);
+      0 40px 130px rgba(18,20,22,0.14),
+      0 0 0 10px rgba(176,141,87,0.08);
   }
 
   .cardHead {
     display: grid;
-    grid-template-columns: 40px 1fr auto;
+    grid-template-columns: 44px 1fr auto;
     gap: 12px;
     align-items: start;
   }
 
   .idx {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+
+    background:
+      radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,0.80), rgba(255,255,255,0.45)),
+      linear-gradient(135deg, rgba(230,210,168,0.55), rgba(176,141,87,0.22));
+
+    border: 1px solid rgba(176,141,87,0.22);
     display: grid;
     place-items: center;
+
     font-size: 13px;
-    font-weight: 900;
-    color: #0f172a;
+    font-weight: 700;
+    color: #1B140B;
   }
 
   .meta h4 {
     margin: 0;
-    font-size: 15px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   .meta p {
-    margin: 6px 0 0;
-    font-size: 12px;
-    line-height: 1.5;
-    color: #64748b;
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-muted);
   }
 
   .status {
-    font-size: 9px;
-    letter-spacing: 0.12em;
+    font-size: 10px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    background: rgba(15, 23, 42, 0.03);
-    color: #64748b;
+    border: 1px solid var(--border-soft);
+    background: rgba(18, 20, 22, 0.03);
+    color: var(--text-muted);
     white-space: nowrap;
   }
 
   .status.done {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(16, 185, 129, 0.10);
     border-color: rgba(16, 185, 129, 0.18);
     color: rgba(5, 150, 105, 0.95);
   }
 
   .status.active {
-    background: rgba(56, 189, 248, 0.12);
-    border-color: rgba(56, 189, 248, 0.22);
-    color: rgba(2, 132, 199, 0.95);
+    background: rgba(176,141,87,0.12);
+    border-color: rgba(176,141,87,0.28);
+    color: rgba(122,90,45,0.95);
   }
 
   .status.next {
-    background: rgba(15, 23, 42, 0.03);
-    border-color: rgba(15, 23, 42, 0.06);
-    color: #64748b;
+    background: rgba(18, 20, 22, 0.03);
+    border-color: var(--border-soft);
+    color: var(--text-muted);
   }
 
   .cardBody {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
   }
 
   .list {
     margin: 0;
     padding-left: 18px;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 13px;
-    line-height: 1.55;
+    line-height: 1.65;
   }
 
   .list li {
-    margin: 6px 0;
+    margin: 8px 0;
   }
 
   @media (max-width: 1024px) {
     .layout {
-      grid-template-columns: 110px 1fr;
+      grid-template-columns: 120px 1fr;
       gap: 14px;
     }
     .lineCard {
@@ -700,17 +675,16 @@
 
   @media (max-width: 640px) {
     .build {
-      padding: 56px 16px;
+      padding: 80px 16px;
     }
     .title {
-      font-size: 20px;
-      letter-spacing: 0.12em;
+      font-size: 30px;
     }
     .header {
-      margin-bottom: 34px;
+      margin-bottom: 40px;
     }
     .layout {
-      grid-template-columns: 80px 1fr;
+      grid-template-columns: 90px 1fr;
     }
   }
 </style>
