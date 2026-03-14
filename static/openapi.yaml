@@ -1,0 +1,1014 @@
+openapi: 3.0.3
+info:
+  title: FlyANGT Mobile API v1
+  description: |
+    REST API for FlyANGT mobile application.
+
+    ## Authentication
+    All protected endpoints require `Authorization: Bearer <token>` header.
+    Obtain the token via `/api/v1/login`, `/api/v1/register`, or `/api/v1/auth/google/token`.
+
+    ## Wallet Verification Flow
+    1. `POST /api/v1/airdrop/wallet/nonce` → get `{ message, nonceToken }`
+    2. Sign `message` in MetaMask/WalletConnect → get `signature`
+    3. `POST /api/v1/airdrop/wallet/verify` → send `{ address, message, signature, nonceToken }`
+
+    ## Onchain Purchase Flow
+    1. `POST /api/v1/presale/onchain/prepare` → get `{ transactions: [approve, buy] }`
+    2. Send `approve` tx via WalletConnect `eth_sendTransaction`
+    3. Send `buy` tx via WalletConnect `eth_sendTransaction`
+  version: 1.0.0
+  contact:
+    name: FlyANGT
+    url: https://flyangt.com
+
+servers:
+  - url: https://flyangt.com
+    description: Production
+  - url: http://localhost:5173
+    description: Local dev
+
+tags:
+  - name: Auth
+    description: Login, register, Google OAuth
+  - name: User
+    description: Profile and settings
+  - name: Presale
+    description: Token presale — Stripe and onchain
+  - name: Airdrop
+    description: Airdrop tasks and wallet verification
+  - name: Token
+    description: ANGT token price and balances
+  - name: Assistant
+    description: AI advisor
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+
+    UserFull:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        age:
+          type: integer
+          nullable: true
+        instagram:
+          type: string
+          nullable: true
+        x:
+          type: string
+          nullable: true
+        telegram:
+          type: string
+          nullable: true
+        onboardingDone:
+          type: boolean
+        referralCode:
+          type: string
+          nullable: true
+        wallet:
+          type: object
+          nullable: true
+          properties:
+            address:
+              type: string
+            verified:
+              type: boolean
+            verifiedAt:
+              type: string
+              format: date-time
+              nullable: true
+
+    Purchase:
+      type: object
+      properties:
+        txHash:
+          type: string
+        blockNumber:
+          type: integer
+        buyer:
+          type: string
+        payToken:
+          type: string
+        payAmount6:
+          type: string
+          description: Pay amount in 1e6 (as string for BigInt safety)
+        tokenAmountWei:
+          type: string
+          description: Token amount in 1e18 (as string)
+        week:
+          type: integer
+        priceMicro:
+          type: string
+          description: Price in 1e6 USD (as string)
+        blockTimestamp:
+          type: integer
+
+paths:
+
+  # ─────────────── AUTH ───────────────
+
+  /api/v1/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  token:
+                    type: string
+                    description: JWT Bearer token
+                  user:
+                    $ref: '#/components/schemas/UserPublic'
+        '400':
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Wrong credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/register:
+    post:
+      tags: [Auth]
+      summary: Register with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                referralCode:
+                  type: string
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/UserPublic'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Account already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/auth/google/token:
+    post:
+      tags: [Auth]
+      summary: Google OAuth for mobile (verify idToken)
+      description: |
+        Mobile app gets `idToken` via `expo-auth-session` or
+        `@react-native-google-signin/google-signin`, then sends it here.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken]
+              properties:
+                idToken:
+                  type: string
+                  description: Google ID token from client SDK
+                referralCode:
+                  type: string
+      responses:
+        '200':
+          description: Auth successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/UserPublic'
+        '400':
+          description: Invalid Google token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email sent (always OK to avoid user enumeration)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /api/v1/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password with token from email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────── USER ───────────────
+
+  /api/v1/user/me:
+    get:
+      tags: [User]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserFull'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/user/settings:
+    patch:
+      tags: [User]
+      summary: Update user profile settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  nullable: true
+                country:
+                  type: string
+                  nullable: true
+                age:
+                  type: integer
+                  nullable: true
+                instagram:
+                  type: string
+                  nullable: true
+                x:
+                  type: string
+                  nullable: true
+                telegram:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserFull'
+                  reward:
+                    type: object
+                    nullable: true
+                    properties:
+                      claimed:
+                        type: boolean
+                      amount:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/user/onboarding:
+    patch:
+      tags: [User]
+      summary: Mark onboarding as complete
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Onboarding marked done
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────── PRESALE ───────────────
+
+  /api/v1/presale/progress:
+    get:
+      tags: [Presale]
+      summary: Get presale progress (public)
+      responses:
+        '200':
+          description: Presale progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dbTokens:
+                    type: number
+                    description: Tokens sold via Stripe (from DB)
+                  onchainTokens:
+                    type: number
+                    description: Tokens sold onchain (from Etherscan)
+                  goal:
+                    type: number
+                    example: 50000000
+
+  /api/v1/presale/stripe/create-session:
+    post:
+      tags: [Presale]
+      summary: Create Stripe checkout session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payAmount]
+              properties:
+                payAmount:
+                  type: number
+                  description: USD amount to pay
+                  example: 100
+                successUrl:
+                  type: string
+                  description: Override redirect URL (e.g. deep link for mobile)
+                  example: myapp://presale/success?session_id={CHECKOUT_SESSION_ID}
+                cancelUrl:
+                  type: string
+                  description: Override cancel URL
+                  example: myapp://presale/cancel
+      responses:
+        '200':
+          description: Stripe session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  url:
+                    type: string
+                    description: Stripe Checkout URL — open in WebView
+                  sessionId:
+                    type: string
+        '400':
+          description: Validation error or presale not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/presale/stripe/status:
+    get:
+      tags: [Presale]
+      summary: Get Stripe purchase status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  purchase:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      status:
+                        type: string
+                        enum: [pending, paid, failed, expired]
+                      week:
+                        type: integer
+                      price:
+                        type: number
+                      payAmount:
+                        type: number
+                      tokenAmount:
+                        type: number
+                      createdAt:
+                        type: string
+                        format: date-time
+
+  /api/v1/presale/onchain/prepare:
+    post:
+      tags: [Presale]
+      summary: Prepare onchain purchase transactions
+      description: |
+        Returns two transactions to execute via WalletConnect in order:
+        1. `approve` — ERC-20 token approval for presale contract
+        2. `buy` — presale contract buy call
+
+        Use `eth_sendTransaction` with `{ to, data }` from each transaction object.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payToken, payAmountUsd]
+              properties:
+                payToken:
+                  type: string
+                  enum: [usdt, usdc]
+                payAmountUsd:
+                  type: number
+                  example: 100
+      responses:
+        '200':
+          description: Transactions prepared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  chainId:
+                    type: integer
+                    example: 137
+                  presaleAddress:
+                    type: string
+                  payTokenAddress:
+                    type: string
+                  payTokenSymbol:
+                    type: string
+                  payAmountUsd:
+                    type: number
+                  payAmount6:
+                    type: string
+                  tokenAmount:
+                    type: number
+                  week:
+                    type: integer
+                  priceUsd:
+                    type: number
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        step:
+                          type: integer
+                        type:
+                          type: string
+                          enum: [approve, buy]
+                        to:
+                          type: string
+                        data:
+                          type: string
+                        description:
+                          type: string
+        '400':
+          description: Presale not active or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/presale/purchases/{wallet}:
+    get:
+      tags: [Presale]
+      summary: Get onchain purchase history for a wallet
+      description: Fetches purchase events via Etherscan (no MetaMask required).
+      parameters:
+        - name: wallet
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Ethereum wallet address (checksummed or lowercase)
+          example: '0xAbC123...'
+      responses:
+        '200':
+          description: List of purchases (newest first, max 50)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Purchase'
+
+  # ─────────────── AIRDROP ───────────────
+
+  /api/v1/airdrop/wallet/nonce:
+    post:
+      tags: [Airdrop]
+      summary: Get nonce for wallet verification
+      description: |
+        Returns a message to sign and a `nonceToken` (JWT valid 5 min).
+        Pass `nonceToken` back to `/verify`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+                  description: Wallet address (lowercase 0x...)
+                provider:
+                  type: string
+                  nullable: true
+                  example: metamask
+      responses:
+        '200':
+          description: Nonce issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonce:
+                    type: integer
+                  message:
+                    type: string
+                    description: Message to sign with wallet
+                  nonceToken:
+                    type: string
+                    description: Short-lived JWT — pass to /verify (no cookie needed)
+
+  /api/v1/airdrop/wallet/verify:
+    post:
+      tags: [Airdrop]
+      summary: Verify wallet ownership via signed message
+      description: |
+        Verifies signature, links wallet to account, issues reward (50 ANGT).
+        Referral reward (150 ANGT) issued to inviter if applicable.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address, message, signature, nonceToken]
+              properties:
+                address:
+                  type: string
+                message:
+                  type: string
+                signature:
+                  type: string
+                nonceToken:
+                  type: string
+                  description: Token received from /nonce endpoint
+      responses:
+        '200':
+          description: Wallet verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  address:
+                    type: string
+                  selfRewarded:
+                    type: boolean
+                  referralRewarded:
+                    type: boolean
+        '401':
+          description: Nonce expired, signature mismatch, or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/airdrop/wallet/status:
+    post:
+      tags: [Airdrop]
+      summary: Check wallet verification status
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+      responses:
+        '200':
+          description: Wallet status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  verified:
+                    type: boolean
+                  verifiedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  rewardIssued:
+                    type: boolean
+                  rewardAmount:
+                    type: integer
+                  needsSignature:
+                    type: boolean
+
+  /api/v1/airdrop/instagram/start:
+    post:
+      tags: [Airdrop]
+      summary: Start Instagram follow task
+      description: Returns task token valid 10 min and Instagram URL. Wait 60s then call /claim.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Task started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  igUrl:
+                    type: string
+                  token:
+                    type: string
+                  amount:
+                    type: integer
+                    example: 75
+                  waitMs:
+                    type: integer
+                    example: 60000
+
+  /api/v1/airdrop/instagram/claim:
+    post:
+      tags: [Airdrop]
+      summary: Claim Instagram follow reward
+      description: Must wait 60s after /start before calling this.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Token received from /start
+      responses:
+        '200':
+          description: Reward claimed or already claimed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  claimed:
+                    type: boolean
+                  alreadyClaimed:
+                    type: boolean
+                  amount:
+                    type: integer
+                  totalAmount:
+                    type: integer
+                  needWaitMs:
+                    type: integer
+                    description: Present if too early (must wait)
+
+  /api/v1/airdrop/igcode/claim:
+    post:
+      tags: [Airdrop]
+      summary: Claim Instagram code reward
+      description: Enter the secret code from Instagram post to get 50 ANGT.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Reward claimed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  claimed:
+                    type: boolean
+                  amount:
+                    type: integer
+                    example: 50
+                  totalAmount:
+                    type: integer
+        '400':
+          description: Wrong code or wallet not connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────── TOKEN ───────────────
+
+  /api/v1/token/price:
+    get:
+      tags: [Token]
+      summary: Get ANGT token price from DEX
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ERC-20 token contract address
+      responses:
+        '200':
+          description: Token price data
+          headers:
+            cache-control:
+              schema:
+                type: string
+                example: public, max-age=15
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tokenAddress:
+                    type: string
+                  symbol:
+                    type: string
+                  priceUsd:
+                    type: number
+                  changePct24h:
+                    type: number
+                  volume24h:
+                    type: number
+                  liquidityUsd:
+                    type: number
+                  updatedAt:
+                    type: string
+                    format: date-time
+
+  /api/v1/dashboard/balances:
+    get:
+      tags: [Token]
+      summary: Get onchain token balances for a wallet
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Wallet address
+      responses:
+        '200':
+          description: Balances
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  # ─────────────── ASSISTANT ───────────────
+
+  /api/v1/assistant:
+    post:
+      tags: [Assistant]
+      summary: Chat with AI advisor
+      description: Uses GPT-4.1-mini with FlyANGT project context. No auth required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt:
+                  type: string
+                  example: What is ANGT token?
+                history:
+                  type: array
+                  description: Last messages (max 12 used)
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+                  lang:
+                    type: string
+                    example: en
+        '400':
+          description: Missing prompt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
