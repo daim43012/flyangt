@@ -28,7 +28,7 @@ function parseAge(v: unknown) {
 
 const TASK_KEY = "profile_completed";
 const TASK_TITLE = "Complete profile";
-const AMOUNT = 200;
+const AMOUNT = 100;
 
 export const PATCH = async ({ request, cookies }: RequestEvent) => {
   const auth = cookies.get("auth_token");
