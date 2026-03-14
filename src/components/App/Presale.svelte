@@ -11,17 +11,17 @@
 <section class="airdrop">
   <div class="main-col">
     <div class="top">
-      <PresaleTimer />
-      <PresaleHero />
+      <div data-tour-page="presale-timer"><PresaleTimer /></div>
+      <div data-tour-page="presale-progress"><PresaleHero {data} /></div>
     </div>
 
     <div class="bottom">
       <div class="left-col">
-        <TokenTerminal {data}/>
-        <RecentActivity {data}/>
+        <div data-tour-page="terminal"><TokenTerminal {data}/></div>
+        <div data-tour-page="recent-activity"><RecentActivity {data}/></div>
       </div>
 
-      <div class="right-col">
+      <div class="right-col" data-tour-page="price-roadmap">
         <PresaleRoadmap/>
       </div>
     </div>
