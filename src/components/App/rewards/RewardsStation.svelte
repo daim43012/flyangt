@@ -65,92 +65,78 @@
 </script>
 
 <div class="dash">
-  <section class="box">
-    <header class="head">
-      <h2 class="title">REWARD STATION</h2>
-    </header>
+  <section class="wrap">
+
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div class="title">REWARD STATION</div>
+    </div>
 
     <div class="split">
+
+      <!-- LEFT: DEPOSIT -->
       <section class="panel">
-        <header class="head mini">
-          <h3 class="title sm">DEPOSIT</h3>
-          <p class="sub">Enter USDT amount to lock and start earning.</p>
-        </header>
 
-        <div class="form">
-          <label class="field">
-            <span class="label">Amount</span>
-            <div class="inputRow">
-              <input
-                class="input"
-                inputmode="decimal"
-                placeholder="0.00"
-                bind:value={deposit}
-                aria-label="USDT amount"
-              />
-              <span class="unit">USDT</span>
-            </div>
-            <div class="under">
-              <span>Available:</span>
-              <b>{status === "connected" && !isLoading ? usdtStr : "—"}</b>
-              <span class="muted">USDT</span>
-            </div>
-          </label>
-          <div class="quick">
-            <button class="q" type="button" on:click={() => setPct(25)}
-              >25%</button
-            >
-            <button class="q" type="button" on:click={() => setPct(50)}
-              >50%</button
-            >
-            <button class="q" type="button" on:click={() => setPct(75)}
-              >75%</button
-            >
-            <button class="q" type="button" on:click={setMax}>MAX</button>
+        <div class="row2">
+          <div class="label">Pay With</div>
+          <div class="balance">
+            Available: <b>{status === "connected" && !isLoading ? usdtStr : "—"} USDT</b>
           </div>
-
-          <button class="btn" type="button">Deposit &amp; Lock</button>
-
-          <p class="hint">
-            Your USDT is locked for <b>{lockDays} days</b>. Rewards are
-            distributed {payoutCadence.toLowerCase()} in{" "}
-            <b>{rewardToken}</b>.
-          </p>
         </div>
+
+        <div class="payBox">
+          <div class="inputWrap">
+            <input
+              inputmode="decimal"
+              placeholder="0.00"
+              bind:value={deposit}
+              aria-label="USDT amount"
+            />
+          </div>
+          <button class="maxBtn" type="button" on:click={setMax}>MAX</button>
+          <div class="unitChip">USDT</div>
+        </div>
+
+        <div class="quick">
+          <button class="q" type="button" on:click={() => setPct(25)}>25%</button>
+          <button class="q" type="button" on:click={() => setPct(50)}>50%</button>
+          <button class="q" type="button" on:click={() => setPct(75)}>75%</button>
+        </div>
+
+        <button class="confirm" type="button">Deposit &amp; Lock</button>
+
+        <p class="hint">
+          Your USDT is locked for <b>{lockDays} days</b>. Rewards are
+          distributed {payoutCadence.toLowerCase()} in <b>{rewardToken}</b>.
+        </p>
       </section>
 
+      <!-- RIGHT: STATUS -->
       <section class="panel">
-        <header class="head mini">
-          <h3 class="title sm">STATUS</h3>
-          <p class="sub">Your station metrics (placeholders for now).</p>
-        </header>
 
-        <div class="stats">
-          <div class="stat">
-            <div class="k">Total locked</div>
-            <div class="v">{totalLocked} <span class="muted">USDT</span></div>
+        <div class="receiveBox">
+          <div class="leftCol">
+            <div class="small">TOTAL LOCKED</div>
+            <div class="big">{totalLocked} <span class="sym">USDT</span></div>
+            <div class="hint">Est. {estimatedMonthlyReward} {rewardToken}/mo</div>
           </div>
-          <div class="stat">
-            <div class="k">Next payout</div>
-            <div class="v">{nextPayout}</div>
-          </div>
-          <div class="stat">
-            <div class="k">Est. monthly reward</div>
-            <div class="v">
-              {estimatedMonthlyReward} <span class="muted">{rewardToken}</span>
-            </div>
-          </div>
-          <div class="stat">
-            <div class="k">Locked until</div>
-            <div class="v">{lockedUntil}</div>
+          <div class="rightCol">
+            <div class="small" style="text-align:right;">APY</div>
+            <div class="rate">{apy}%</div>
+            <div class="small" style="text-align:right; margin-top:6px;">Next payout</div>
+            <div class="rate">{nextPayout}</div>
           </div>
         </div>
 
         <div class="note">
           <span class="dot" aria-hidden="true"></span>
           <div class="noteText">
-            After the lock ends, your principal becomes available for
-            withdrawal.
+            After the lock ends, your principal becomes available for withdrawal.
           </div>
           <span class="pill soft">{lockDays}D</span>
         </div>
@@ -158,9 +144,6 @@
         <div class="timeline" aria-label="Reward schedule line">
           <div class="tl-head">
             <div class="tl-title">REWARD SCHEDULE</div>
-            <div class="tl-sub">
-              Line, not boxes. Values will be connected later.
-            </div>
           </div>
 
           <div class="tl">
@@ -200,252 +183,174 @@
           </div>
         </div>
       </section>
+
     </div>
   </section>
 </div>
 
 <style>
-  .box {
+  .dash {
+    width: 100%;
+  }
+
+  .wrap {
     position: relative;
-    border-radius: 26px;
-    padding: 26px;
-    overflow: hidden;
-    background: white;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--bg-white);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 22px 60px rgba(15, 23, 42, 0.1),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
   }
 
-  .box::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        1100px 360px at 20% 0%,
-        rgba(15, 23, 42, 0.06),
-        transparent 58%
-      ),
-      radial-gradient(
-        900px 320px at 85% 25%,
-        rgba(15, 23, 42, 0.05),
-        transparent 62%
-      );
-    pointer-events: none;
+  /* BRAND HEADER */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
   }
 
-  .head {
-    position: relative;
-    display: grid;
-    gap: 6px;
-    margin-bottom: 14px;
-    max-width: 760px;
+  .logo {
+    width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    color: var(--accent);
   }
 
-  .head.mini {
-    margin-bottom: 10px;
-    max-width: none;
+  .logo svg {
+    width: 22px;
+    height: 22px;
   }
 
   .title {
     margin: 0;
-    font-size: 18px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
-  }
-
-  .title.sm {
-    font-size: 16px;
-  }
-
-  .sub {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: rgba(15, 23, 42, 0.65);
-  }
-
-  .sub b {
-    color: rgba(15, 23, 42, 0.92);
-    font-weight: 950;
-  }
-
-  .section {
-    margin-top: 14px;
-  }
-
-  .grid {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-top: 6px;
-  }
-
-  .card {
-    position: relative;
-    border-radius: 18px;
-    padding: 16px;
-
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.8) inset;
-
-    display: grid;
-    grid-template-columns: 36px 1fr auto;
-    align-items: center;
-    gap: 12px;
-
-    transition:
-      transform 0.12s ease,
-      border-color 0.12s ease,
-      filter 0.12s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-1px);
-    border-color: rgba(15, 23, 42, 0.12);
-    filter: brightness(1.02);
-  }
-
-  .icon {
-    height: 36px;
-    width: 36px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-
-    font-size: 16px;
-  }
-
-  .meta h3 {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 950;
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 600;
     letter-spacing: -0.02em;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
-  .meta p {
-    margin: 4px 0 0;
-    font-size: 12px;
-    color: rgba(15, 23, 42, 0.62);
-  }
-
-  .pill {
-    height: 26px;
-    padding: 0 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    color: rgba(15, 23, 42, 0.85);
-  }
-
-  .pill.soft {
-    background: rgba(15, 23, 42, 0.03);
-    border-color: rgba(15, 23, 42, 0.08);
-  }
-
-  /* === Rewards Station additions (same design language) === */
+  /* SPLIT */
   .split {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
-    margin-top: 14px;
-    position: relative;
   }
 
   .panel {
-    border-radius: 18px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.8) inset;
-  }
-
-  .form {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
-    margin-top: 6px;
   }
 
-  .field {
-    display: grid;
-    gap: 6px;
+  /* LABEL + BALANCE ROW */
+  .row2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .label {
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.85);
-  }
-
-  .inputRow {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 10px;
-
-    border-radius: 14px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
-  }
-
-  .input {
-    border: none;
-    outline: none;
-    background: transparent;
-    color: #0f172a;
-    font-weight: 950;
-    font-size: 16px;
-    letter-spacing: -0.02em;
-    width: 100%;
-  }
-
-  .input::placeholder {
-    color: rgba(15, 23, 42, 0.35);
-    font-weight: 900;
-  }
-
-  .unit {
-    height: 26px;
-    padding: 0 10px;
-    border-radius: 999px;
     font-size: 11px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .balance {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .balance b {
+    color: var(--text-main);
+    font-weight: 600;
+  }
+
+  /* PAY BOX */
+  .payBox {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
     align-items: center;
-    justify-content: center;
-    background: rgba(15, 23, 42, 0.03);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    color: rgba(15, 23, 42, 0.85);
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 18px 60px rgba(18, 20, 22, 0.06),
+      0 6px 18px rgba(18, 20, 22, 0.04);
+  }
+
+  .inputWrap {
+    display: flex;
+    align-items: center;
+    height: 46px;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    padding: 0 12px;
+  }
+
+  .inputWrap input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+  }
+
+  .inputWrap input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.45;
+  }
+
+  .maxBtn {
+    height: 46px;
+    padding: 0 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 160ms ease;
+  }
+
+  .maxBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(18, 20, 22, 0.08);
+  }
+
+  .unitChip {
+    height: 46px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    display: grid;
+    align-items: center;
     white-space: nowrap;
   }
 
+  /* QUICK BUTTONS */
   .quick {
     display: flex;
     gap: 8px;
@@ -456,94 +361,120 @@
     height: 30px;
     padding: 0 12px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: rgba(255, 255, 255, 0.9);
-    color: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    color: var(--text-muted);
     font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
+    font-weight: 600;
     cursor: pointer;
-    transition:
-      transform 0.12s ease,
-      filter 0.12s ease,
-      border-color 0.12s ease;
+    transition: border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
   }
+
   .q:hover {
     transform: translateY(-1px);
-    filter: brightness(1.02);
-    border-color: rgba(15, 23, 42, 0.14);
+    border-color: rgba(176, 141, 87, 0.3);
+    color: var(--accent-dark);
   }
 
-  .btn {
-    height: 42px;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #0f172a;
-    color: white;
-    font-weight: 950;
-    letter-spacing: -0.02em;
+  /* CONFIRM BUTTON */
+  .confirm {
+    position: relative;
+    height: 64px;
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(176, 141, 87, 0.30);
+    background: rgba(176, 141, 87, 0.10);
+    color: var(--accent-dark);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-    transition:
-      transform 0.12s ease,
-      filter 0.12s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 18px 40px rgba(18, 20, 22, 0.04);
+    transition: 160ms ease;
   }
 
-  .btn:hover {
+  .confirm:hover {
     transform: translateY(-1px);
-    filter: brightness(1.02);
+    box-shadow: 0 22px 48px rgba(176, 141, 87, 0.14);
+    border-color: rgba(176, 141, 87, 0.45);
   }
 
+  /* HINT */
   .hint {
     margin: 0;
     font-size: 12px;
+    font-weight: 600;
     line-height: 1.45;
-    color: rgba(15, 23, 42, 0.62);
+    color: var(--text-muted);
   }
 
-  .stats {
+  /* RECEIVE BOX (stats) */
+  .receiveBox {
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.02);
+    border: 1px solid var(--border-soft);
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .leftCol {
+    display: grid;
+    gap: 0;
+  }
+
+  .rightCol {
+    display: grid;
+    gap: 0;
+  }
+
+  .small {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .big {
     margin-top: 6px;
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+    line-height: 1.05;
   }
 
-  .stat {
-    border-radius: 14px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
-    display: grid;
-    gap: 4px;
+  .sym {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--accent);
   }
 
-  .k {
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.78);
-  }
-
-  .v {
+  .rate {
     font-size: 14px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 6px;
+    white-space: nowrap;
   }
 
-  .muted {
-    color: rgba(15, 23, 42, 0.55);
-    font-weight: 950;
-    font-size: 12px;
-  }
-
+  /* NOTE */
   .note {
-    margin-top: 10px;
     border-radius: 16px;
     padding: 12px;
-    background: rgba(15, 23, 42, 0.03);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(176, 141, 87, 0.04);
+    border: 1px solid rgba(176, 141, 87, 0.18);
     display: grid;
     grid-template-columns: 10px 1fr auto;
     gap: 10px;
@@ -554,38 +485,52 @@
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--accent);
   }
 
   .noteText {
     font-size: 12px;
-    color: rgba(15, 23, 42, 0.65);
+    font-weight: 600;
+    color: var(--text-muted);
     line-height: 1.45;
   }
 
-  /* Timeline (line with points, no boxes) */
+  .pill {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(176, 141, 87, 0.08);
+    border: 1px solid rgba(176, 141, 87, 0.22);
+    color: var(--accent-dark);
+  }
+
+  .pill.soft {
+    background: rgba(176, 141, 87, 0.05);
+    border-color: rgba(176, 141, 87, 0.15);
+  }
+
+  /* TIMELINE */
   .timeline {
-    margin-top: 12px;
-    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    border-top: 1px solid var(--border-soft);
     padding-top: 12px;
   }
 
   .tl-head {
-    display: grid;
-    gap: 4px;
     margin-bottom: 10px;
   }
 
   .tl-title {
     font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: #0f172a;
-  }
-
-  .tl-sub {
-    font-size: 12px;
-    color: rgba(15, 23, 42, 0.6);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-main);
   }
 
   .tl {
@@ -595,9 +540,9 @@
     gap: 10px;
     padding: 12px 10px 6px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+    background: rgba(176, 141, 87, 0.03);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 12px 26px rgba(18, 20, 22, 0.05);
   }
 
   .rail {
@@ -606,7 +551,7 @@
     right: 18px;
     top: 22px;
     height: 2px;
-    background: rgba(15, 23, 42, 0.12);
+    background: rgba(176, 141, 87, 0.25);
     border-radius: 999px;
   }
 
@@ -622,14 +567,14 @@
     width: 12px;
     height: 12px;
     border-radius: 999px;
-    background: #0f172a;
-    border: 2px solid white;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+    background: var(--accent);
+    border: 2px solid var(--bg-white);
+    box-shadow: 0 4px 12px rgba(176, 141, 87, 0.3);
     margin-top: 16px;
   }
 
   .pin-dark {
-    background: rgba(15, 23, 42, 0.55);
+    background: var(--accent-dark);
   }
 
   .t {
@@ -639,35 +584,34 @@
 
   .t1 {
     font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
   }
 
   .t2 {
     font-size: 12px;
-    color: rgba(15, 23, 42, 0.62);
+    font-weight: 600;
+    color: var(--text-muted);
     line-height: 1.35;
   }
 
+  /* RESPONSIVE */
   @media (max-width: 980px) {
-    .dash {
-      padding: 0 14px 14px;
-    }
-    .box {
+    .wrap {
       padding: 16px;
       border-radius: 20px;
     }
-    .grid {
-      grid-template-columns: 1fr;
-    }
+
     .split {
       grid-template-columns: 1fr;
     }
+
     .tl {
       grid-template-columns: 1fr;
       padding: 12px;
     }
+
     .rail {
       left: 18px;
       right: auto;
@@ -676,15 +620,36 @@
       width: 2px;
       height: auto;
     }
+
     .point {
       grid-template-rows: auto;
       grid-template-columns: 18px 1fr;
       align-items: start;
       padding: 8px 6px;
     }
+
     .pin {
       margin-top: 0;
       margin-left: 6px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .payBox {
+      grid-template-columns: 1fr;
+    }
+
+    .maxBtn,
+    .unitChip {
+      width: 100%;
+    }
+
+    .receiveBox {
+      grid-template-columns: 1fr;
+    }
+
+    .rate {
+      text-align: left;
     }
   }
 </style>
