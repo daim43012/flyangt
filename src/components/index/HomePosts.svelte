@@ -19,8 +19,8 @@
 
 <section class="news">
   <div class="news-header">
-    <h2 class="news-title">NEWSROOM</h2>
-    <p class="news-subtitle">Latest updates from the ecosystem.</p>
+    <h2 class="news-title">Newsroom</h2>
+    <p class="news-subtitle">Latest updates from the ecosystem</p>
 
     <a class="news-all" href="/blog">
       View all →
@@ -59,99 +59,107 @@
   {/if}
 </section>
 
-
 <style>
   .news {
-    padding: 72px 16px 96px;
+  padding: 0 16px 120px;
     max-width: 1200px;
     margin: 0 auto;
   }
 
   .news-header {
     text-align: center;
-    margin-bottom: 56px;
+    margin-bottom: 72px;
     position: relative;
   }
 
   .news-title {
-    font-size: 36px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     margin: 0;
-    color: #0f172a;
   }
 
   .news-subtitle {
-    margin-top: 6px;
+    margin-top: 14px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .news-all {
     position: absolute;
     right: 0;
     top: 6px;
+
     text-decoration: none;
-    font-weight: 800;
-    color: #0f172a;
+    font-weight: 600;
+    color: var(--text-main);
     font-size: 13px;
+
     padding: 10px 14px;
     border-radius: 999px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+
     box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.08),
-      0 6px 18px rgba(15, 23, 42, 0.06);
+      0 30px 90px rgba(18,20,22,0.08),
+      0 8px 22px rgba(18,20,22,0.06);
+
     transition:
       transform 0.45s ease,
-      box-shadow 0.45s ease;
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
   }
 
   .news-all:hover {
     transform: translateY(-3px);
     box-shadow:
-      0 26px 80px rgba(15, 23, 42, 0.12),
-      0 10px 28px rgba(15, 23, 42, 0.08);
+      0 40px 110px rgba(18,20,22,0.12),
+      0 12px 32px rgba(18,20,22,0.08);
+    border-color: rgba(176,141,87,0.35);
   }
 
   .news-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 26px;
+    gap: 34px;
   }
 
   .news-card {
     display: block;
     text-align: left;
-    padding: 18px 18px 20px;
-    border-radius: 24px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    text-decoration: none;
+    color: inherit;
+
+    padding: 18px 18px 22px;
+    border-radius: 26px;
+
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+
     box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.08),
-      0 6px 18px rgba(15, 23, 42, 0.06);
+      0 30px 90px rgba(18,20,22,0.08),
+      0 8px 22px rgba(18,20,22,0.06);
+
     transition:
       transform 0.45s ease,
       box-shadow 0.45s ease,
       border-color 0.45s ease;
-    cursor: pointer;
-    text-decoration: none;
   }
 
   .news-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
     box-shadow:
-      0 26px 80px rgba(15, 23, 42, 0.12),
-      0 10px 28px rgba(15, 23, 42, 0.08);
+      0 40px 110px rgba(18,20,22,0.12),
+      0 12px 32px rgba(18,20,22,0.08);
+    border-color: rgba(176,141,87,0.35);
   }
 
   .news-thumb {
     width: 100%;
-    height: 170px;
+    height: 178px;
     border-radius: 18px;
     background: rgba(15, 23, 42, 0.04);
     overflow: hidden;
@@ -168,15 +176,15 @@
   }
 
   .news-fallback {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
     background: rgba(15, 23, 42, 0.04);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
   .news-meta {
@@ -189,48 +197,62 @@
 
   .news-date {
     font-size: 12px;
-    color: #64748b;
-    font-weight: 700;
+    color: var(--text-muted);
+    font-weight: 600;
   }
 
   .news-pill {
     font-size: 11px;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
+
     padding: 6px 10px;
     border-radius: 999px;
-    color: #0f172a;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(15, 23, 42, 0.03);
-    font-weight: 900;
+
+    color: var(--text-muted);
+    border: 1px solid var(--border-soft);
+    background: rgba(15, 23, 42, 0.02);
+    font-weight: 700;
   }
 
   .news-h3 {
-    margin: 8px 0 10px;
+    margin: 10px 0 10px;
     font-size: 18px;
-    font-weight: 800;
-    text-transform: uppercase;
-    font-style: italic;
+    font-weight: 600;
     letter-spacing: -0.02em;
-    color: #0f172a;
-    line-height: 1.15;
+    color: var(--text-main);
+    line-height: 1.2;
   }
 
   .news-p {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-muted);
+
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
+  .news-empty {
+    text-align: center;
+    color: var(--text-muted);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    border-radius: 26px;
+    padding: 28px 22px;
+    box-shadow:
+      0 30px 90px rgba(18,20,22,0.06),
+      0 8px 22px rgba(18,20,22,0.04);
+  }
+
   @media (max-width: 1024px) {
     .news-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+
     .news-all {
       position: static;
       display: inline-block;
@@ -240,22 +262,21 @@
 
   @media (max-width: 640px) {
     .news {
-      padding: 56px 16px 72px;
+      padding: 80px 16px 90px;
     }
 
     .news-title {
-      font-size: 20px;
-      letter-spacing: 0.12em;
+      font-size: 30px;
     }
 
     .news-grid {
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 26px;
     }
 
     .news-card {
       padding: 16px 16px 18px;
-      border-radius: 20px;
+      border-radius: 22px;
     }
 
     .news-thumb {
