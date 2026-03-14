@@ -39,38 +39,21 @@
 </div>
 
 <style>
-
   .box {
     position: relative;
-    border-radius: 26px;
+    border-radius: 20px;
     padding: 26px;
     overflow: hidden;
 
-    background: white;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 22px 60px rgba(15, 23, 42, 0.1),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
   }
 
   .box::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        1100px 360px at 20% 0%,
-        rgba(15, 23, 42, 0.06),
-        transparent 58%
-      ),
-      radial-gradient(
-        900px 320px at 85% 25%,
-        rgba(15, 23, 42, 0.05),
-        transparent 62%
-      );
-    pointer-events: none;
+    content: none;
   }
 
   .head {
@@ -84,17 +67,17 @@
   .title {
     margin: 0;
     font-size: 18px;
-    font-weight: 950;
+    font-weight: 600;
+    font-family: var(--font-heading);
     letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
   .sub {
     margin: 0;
     font-size: 13px;
     line-height: 1.5;
-    color: rgba(15, 23, 42, 0.65);
+    color: var(--text-muted);
   }
 
   .grid {
@@ -102,20 +85,19 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
-      margin-top: 6px;
-
+    margin-top: 6px;
   }
 
   .card {
     position: relative;
-    border-radius: 18px;
+    border-radius: 16px;
     padding: 16px;
 
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      0 18px 60px rgba(18, 20, 22, 0.06),
+      0 6px 18px rgba(18, 20, 22, 0.04);
 
     display: grid;
     grid-template-columns: 36px 1fr auto;
@@ -124,14 +106,12 @@
 
     transition:
       transform 0.12s ease,
-      border-color 0.12s ease,
-      filter 0.12s ease;
+      border-color 0.12s ease;
   }
 
   .card:hover {
     transform: translateY(-1px);
-    border-color: rgba(15, 23, 42, 0.12);
-    filter: brightness(1.02);
+    border-color: rgba(176, 141, 87, 0.22);
   }
 
   .icon {
@@ -141,8 +121,8 @@
     place-items: center;
     border-radius: 12px;
 
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: rgba(176, 141, 87, 0.08);
+    border: 1px solid rgba(176, 141, 87, 0.22);
 
     font-size: 16px;
   }
@@ -150,15 +130,16 @@
   .meta h3 {
     margin: 0;
     font-size: 13px;
-    font-weight: 950;
+    font-weight: 600;
+    font-family: var(--font-heading);
     letter-spacing: -0.02em;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
   .meta p {
     margin: 4px 0 0;
     font-size: 12px;
-    color: rgba(15, 23, 42, 0.62);
+    color: var(--text-muted);
   }
 
   .pill {
@@ -166,22 +147,19 @@
     padding: 0 10px;
     border-radius: 999px;
     font-size: 11px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    color: rgba(15, 23, 42, 0.85);
+    background: rgba(176, 141, 87, 0.08);
+    border: 1px solid rgba(176, 141, 87, 0.22);
+    color: var(--accent-dark);
   }
 
   @media (max-width: 980px) {
-    .dash {
-      padding: 0 14px 14px;
-    }
     .box {
       padding: 16px;
       border-radius: 20px;
