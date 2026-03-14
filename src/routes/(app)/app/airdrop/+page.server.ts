@@ -2,13 +2,15 @@ import type { PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 import { verifyJwt } from "$lib/jwt";
 import prisma from "$lib/prisma";
+import { getOnchainTotalUsd } from "$lib/web3/presale";
 
 const TASKS = [
   { key: "wallet_connected", title: "Connect wallet" },
   { key: "profile_completed", title: "Fill profile" },
   { key: "social_ig", title: "Instagram visit" },
   { key: "ig_code", title: "Instagram code" },
-  { key: "invite_friend", title: "Invite a friend" }
+  { key: "invite_friend", title: "Invite a friend" },
+  { key: "presale_500", title: "Presale purchase $500+" }
 ] as const;
 
 const REF_PREFIX = "referral_wallet_connected:";
@@ -87,6 +89,18 @@ export const load: PageServerLoad = async ({ cookies }) => {
     };
   });
 
+  // Presale purchase total (Stripe + on-chain)
+  const stripeAgg = await prisma.presalePurchase.aggregate({
+    where: { userId: user.id, status: "paid" },
+    _sum: { payAmount: true },
+  });
+  let presaleTotalUsd = stripeAgg._sum.payAmount ?? 0;
+
+  if (user.wallet?.address && user.wallet.verified) {
+    presaleTotalUsd += await getOnchainTotalUsd(user.wallet.address);
+  }
+  presaleTotalUsd = Math.round(presaleTotalUsd * 100) / 100;
+
   const completedCount = tasks.filter((t: any) => t.completed).length;
 
   const totalAmount =
@@ -125,7 +139,8 @@ export const load: PageServerLoad = async ({ cookies }) => {
       referral: {
         code: user.referralCode,
         count: referralCount
-      }
+      },
+      presaleTotalUsd
     }
   };
 };
