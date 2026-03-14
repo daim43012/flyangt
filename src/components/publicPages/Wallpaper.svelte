@@ -1,6 +1,20 @@
 <script lang="ts">
-  export let pdfUrl = "/docs/whitepaper.pdf";
+  import { onMount } from "svelte";
+
+  export let pdfUrl = "/docs/WhitePaper ANGT.pdf";
   export let coverUrl = "/images/whitepaper.png";
+
+  let loaded = false;
+
+  onMount(() => {
+    const img = new Image();
+    img.src = coverUrl;
+    if (img.complete) {
+      loaded = true;
+    } else {
+      img.onload = () => (loaded = true);
+    }
+  });
 
   function downloadNameFromUrl(url: string) {
     try {
@@ -63,8 +77,14 @@
 
     <div class="split">
       <div class="left">
-        <div class="cover">
-          <img src={coverUrl} alt="Whitepaper cover" loading="lazy" />
+        <div class="cover" class:cover-loaded={loaded}>
+          <img
+            src={coverUrl}
+            alt="Whitepaper cover"
+            loading="eager"
+            fetchpriority="high"
+            on:load={() => (loaded = true)}
+          />
         </div>
       </div>
 
@@ -76,11 +96,7 @@
         </div>
 
         <div class="actions">
-          <a
-            class="btn primary"
-            href={pdfUrl}
-            download={downloadNameFromUrl(pdfUrl)}
-          >
+          <a class="btn primary" href={pdfUrl} download={downloadNameFromUrl(pdfUrl)}>
             Download PDF
           </a>
 
@@ -94,11 +110,12 @@
 </section>
 
 <style>
+  /* размеры секции не трогаю */
   .wp {
     padding: 72px 16px 110px;
     max-width: 1200px;
     margin: 0 auto;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
   .wp-head {
@@ -110,48 +127,26 @@
     margin-bottom: 56px;
   }
 
+  /* === Typography как в crown === */
   .wp-title {
-    font-size: 36px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
     margin: 0;
-    color: #0f172a;
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    text-transform: none;
+    font-style: normal;
   }
 
   .wp-sub {
-    margin-top: 6px;
+    margin-top: 14px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
-  .wp-badges {
-    display: inline-flex;
-    gap: 8px;
-  }
-
-  .pill {
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    padding: 7px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: rgba(15, 23, 42, 0.03);
-    color: rgba(15, 23, 42, 0.78);
-    white-space: nowrap;
-    height: fit-content;
-  }
-
-  .pill.done {
-    border-color: rgba(22, 163, 74, 0.35);
-    background: rgba(22, 163, 74, 0.16);
-    color: #14532d;
-  }
-
+  /* сетку/габариты не трогаю */
   .wp-top {
     max-width: 980px;
     margin: 0 auto 18px;
@@ -160,88 +155,132 @@
     gap: 14px;
   }
 
+  /* карточки: размеры (padding/radius) не трогаю, только стиль как crown */
   .stat {
     position: relative;
-    padding: 22px;
-    border-radius: 24px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 22px;             /* НЕ МЕНЯЮ */
+    border-radius: 24px;       /* НЕ МЕНЯЮ */
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.08),
-      0 6px 18px rgba(15, 23, 42, 0.06);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     display: grid;
     grid-template-columns: 42px 1fr;
     gap: 14px;
     align-items: start;
     overflow: hidden;
+
+    transition:
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
+  }
+
+  .stat:hover {
+    transform: translateY(-8px);
+    box-shadow:
+      0 40px 110px rgba(18, 20, 22, 0.12),
+      0 12px 32px rgba(18, 20, 22, 0.08);
+    border-color: rgba(176, 141, 87, 0.35);
   }
 
   .stat-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.04);
+    width: 42px;              /* НЕ МЕНЯЮ */
+    height: 42px;             /* НЕ МЕНЯЮ */
+    border-radius: 14px;      /* НЕ МЕНЯЮ */
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid rgba(15, 23, 42, 0.06);
     display: grid;
     place-items: center;
-    font-size: 20px;
+    font-size: 20px;          /* НЕ МЕНЯЮ */
   }
 
   .stat-kicker {
-    font-size: 10px;
-    letter-spacing: 0.22em;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.26em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
     margin-top: 2px;
   }
 
+  /* value как crown metric-value: градиентный текст */
   .stat-value {
-    margin-top: 6px;
-    font-size: 18px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    margin-top: 10px;
+    font-family: var(--font-heading, inherit);
+    font-size: 18px;          /* НЕ МЕНЯЮ (как было) */
+    font-weight: 600;
+    line-height: 1;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+
+    text-transform: none;
+    font-style: normal;
+    letter-spacing: -0.01em;
   }
 
   .stat-note {
-    margin-top: 6px;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-muted);
   }
 
+  /* panel: размеры не трогаю, стиль как crown */
   .panel {
     max-width: 980px;
     margin: 0 auto 18px;
-    padding: 22px;
-    border-radius: 24px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 22px;            /* НЕ МЕНЯЮ */
+    border-radius: 24px;      /* НЕ МЕНЯЮ */
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.08),
-      0 6px 18px rgba(15, 23, 42, 0.06);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
+    min-height: 620px;        /* НЕ МЕНЯЮ */
 
-    min-height: 620px;
+    transition:
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
+  }
+
+  .panel:hover {
+    transform: translateY(-6px);
+    box-shadow:
+      0 40px 110px rgba(18, 20, 22, 0.12),
+      0 12px 32px rgba(18, 20, 22, 0.08);
+    border-color: rgba(176, 141, 87, 0.30);
   }
 
   .panel-head h3 {
     margin: 2px 0 8px;
-    font-size: 16px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    font-size: 16px;          /* НЕ МЕНЯЮ */
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
+    text-transform: none;
+    font-style: normal;
   }
 
   .panel-head p {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-muted);
   }
 
+  /* layout не трогаю */
   .split {
     margin-top: 16px;
     display: grid;
@@ -256,15 +295,39 @@
     gap: 10px;
   }
 
+  /* размеры cover не меняю, но можно привести к теме (bg/бордер) */
   .cover {
-    border-radius: 18px;
+    border-radius: 18px;      /* НЕ МЕНЯЮ */
     border: 1px solid rgba(15, 23, 42, 0.08);
-    background: #f8fafc;
     overflow: hidden;
-    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.1);
-    height: 700px;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
+    height: 700px;            /* НЕ МЕНЯЮ */
     display: grid;
     place-items: center;
+    position: relative;
+
+    /* Shimmer placeholder пока изображение грузится */
+    background:
+      linear-gradient(
+        105deg,
+        rgba(15, 23, 42, 0.04) 0%,
+        rgba(176, 141, 87, 0.06) 30%,
+        rgba(15, 23, 42, 0.04) 60%,
+        rgba(176, 141, 87, 0.04) 100%
+      );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+
+  /* После загрузки — убираем анимацию */
+  .cover-loaded {
+    animation: none;
+    background: rgba(15, 23, 42, 0.02);
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   .cover img {
@@ -272,59 +335,30 @@
     height: 100%;
     object-fit: cover;
     display: block;
+    /* Начинаем прозрачным, плавно появляемся */
+    opacity: 0;
+    transition: opacity 0.55s ease;
   }
 
-  .cover-hint {
-    font-size: 12px;
-    color: #64748b;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .cover-loaded img {
+    opacity: 1;
   }
 
   .right {
-    border-radius: 18px;
+    border-radius: 18px;      /* НЕ МЕНЯЮ */
     border: 1px solid rgba(15, 23, 42, 0.08);
-    background: #fff;
-    padding: 18px;
+    background: var(--bg-white);
+    padding: 18px;            /* НЕ МЕНЯЮ */
     box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
 
-  .right-top {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .mini {
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(15, 23, 42, 0.02);
-    padding: 10px 12px;
-  }
-
-  .mini-k {
-    font-size: 10px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: #64748b;
-  }
-
-  .mini-v {
-    margin-top: 6px;
-    font-size: 14px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    color: #0f172a;
-  }
-
   .desc {
     font-size: 14px;
     line-height: 1.65;
-    color: #334155;
+    color: var(--text-muted);
   }
 
   .actions {
@@ -334,45 +368,47 @@
     margin-top: 4px;
   }
 
+  /* === КНОПКИ: размер не трогаю, меняю оформление под crown === */
   .btn {
-    padding: 10px 12px;
-    border-radius: 14px;
+    padding: 10px 12px;       /* НЕ МЕНЯЮ */
+    border-radius: 14px;      /* НЕ МЕНЯЮ */
     border: 1px solid rgba(15, 23, 42, 0.12);
     background: rgba(15, 23, 42, 0.03);
     color: rgba(15, 23, 42, 0.92);
-    font-size: 13px;
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+
     cursor: pointer;
     text-decoration: none;
     transition:
-      transform 160ms ease,
-      background 160ms ease;
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease,
+      background 0.45s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
   }
 
   .btn:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     background: rgba(15, 23, 42, 0.05);
+    border-color: rgba(176, 141, 87, 0.30);
+    box-shadow:
+      0 18px 50px rgba(18, 20, 22, 0.10);
   }
 
   .btn.primary {
-    border-color: rgba(22, 163, 74, 0.3);
-    background: rgba(22, 163, 74, 0.14);
-    color: #14532d;
+    border-color: rgba(176, 141, 87, 0.36);
+    background: rgba(176, 141, 87, 0.14);
+    color: rgba(15, 23, 42, 0.92);
   }
 
   .btn.ghost {
-    background: #fff;
-  }
-
-  .note {
-    margin-top: auto;
-    font-size: 12px;
-    color: #64748b;
-    line-height: 1.5;
-    border-top: 1px dashed rgba(15, 23, 42, 0.1);
-    padding-top: 12px;
+    background: var(--bg-white);
   }
 
   @media (max-width: 900px) {
@@ -383,16 +419,16 @@
       grid-template-columns: 1fr;
     }
     .cover {
-      height: 360px;
+      height: 360px; /* твой респонсив, оставил */
     }
   }
 
   @media (max-width: 720px) {
     .wp {
-      padding: 56px 14px 72px;
+      padding: 56px 14px 72px; /* твой респонсив, оставил */
     }
     .wp-title {
-      font-size: 22px;
+      font-size: 22px;         /* твой респонсив, оставил */
       letter-spacing: 0.1em;
     }
     .wp-head {
