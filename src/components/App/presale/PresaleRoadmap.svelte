@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { BrowserProvider } from "ethers";
+  import { BrowserProvider, JsonRpcProvider } from "ethers";
 
   import { wallet } from "$lib/wallet/wallet.store";
   import { chainKey } from "$lib/wallet/chains";
@@ -33,32 +33,10 @@
     return "future";
   }
 
-  const PUBLIC_POLYGON_RPC = "https://polygon-rpc.com/";
-
   function getReadProvider() {
     if ($wallet.provider) return new BrowserProvider($wallet.provider as any);
-    return new BrowserProvider(
-      {
-        request: async ({ method, params }: any) => {
-          const body = {
-            jsonrpc: "2.0",
-            id: 1,
-            method,
-            params: params ?? [],
-          };
-
-          const res = await fetch(PUBLIC_POLYGON_RPC, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
-          });
-
-          const json = await res.json();
-          if (json.error) throw new Error(json.error.message || "RPC error");
-          return json.result;
-        },
-      } as any,
-    );
+    const url = process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com/';
+    return new JsonRpcProvider(url, { chainId: 137, name: 'matic' });
   }
 
   async function loadRoadmap() {
@@ -202,279 +180,263 @@
 </div>
 
 <style>
+.wrap {
+  position: relative;
+  background: var(--bg-white);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid var(--border-soft);
+  box-shadow:
+    0 30px 90px rgba(18, 20, 22, 0.08),
+    0 8px 22px rgba(18, 20, 22, 0.06);
+  align-items: start;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  display: inline-grid;
+  place-items: center;
+}
+.icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+}
+
+.pill.blue {
+  background: rgba(176, 141, 87, 0.08);
+  border-color: rgba(176, 141, 87, 0.22);
+  color: var(--accent-dark);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 14px 0 16px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  position: relative;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: start;
+  position: relative;
+}
+
+/* vertical line */
+.item::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 18px;
+  bottom: -10px;
+  width: 2px;
+  background: var(--border-soft);
+}
+.item:last-child::before {
+  display: none;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.12);
+  border: 2px solid var(--bg-white);
+  box-shadow: 0 10px 18px rgba(18, 20, 22, 0.12);
+  margin-top: 6px;
+}
+
+/* === CARD BASE === */
+.card {
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 12px 26px rgba(18, 20, 22, 0.05);
+  transition: transform 0.12s ease;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wkline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.wk {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.mini {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--accent-dark);
+}
+
+.desc {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* === COMPACT (past/future) === */
+.item.compact .card {
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+/* === FULL (current) === */
+.item.full .card {
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.badge {
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(176, 141, 87, 0.10);
+  border: 1px solid rgba(176, 141, 87, 0.25);
+  color: var(--accent-dark);
+  white-space: nowrap;
+}
+
+/* === STATES === */
+
+/* Past = зелёный */
+.item.past .dot { background: #22c55e; }
+.item.past .price { color: #22c55e; }
+.item.past .card {
+  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(34, 197, 94, 0.16);
+}
+
+/* Current = выделение */
+.item.current .dot { background: var(--accent); }
+.item.current .card {
+  background: rgba(176, 141, 87, 0.06);
+  border-color: rgba(176, 141, 87, 0.22);
+  box-shadow:
+    0 18px 36px rgba(176, 141, 87, 0.12),
+    0 12px 26px rgba(18, 20, 22, 0.05);
+}
+
+/* Future = нейтрально */
+.item.future .dot { background: rgba(15, 23, 42, 0.12); }
+.item.future .price { color: var(--accent); opacity: 0.75; }
+
+.footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.goal {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.goal b {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
   .wrap {
-    position: relative;
-    background: #fff;
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-    align-items: start;
-    transition:
-      transform 0.12s ease,
-      filter 0.12s ease;
+    padding: 16px;
+    border-radius: 18px;
   }
-
-  .wrap:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.01);
-  }
-
-  .head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-
-  .left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .icon {
-    width: 26px;
-    height: 26px;
-    color: rgba(37, 99, 235, 0.95);
-    display: inline-grid;
-    place-items: center;
-  }
-  .icon svg {
-    width: 26px;
-    height: 26px;
-  }
-
   .title {
-     margin: 0;
-    font-size: 22px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
+    font-size: 16px;
   }
-
-  .meta {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .pill {
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(248, 250, 252, 0.95);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    color: rgba(15, 23, 42, 0.72);
-  }
-
-  .pill.blue {
-    color: rgba(37, 99, 235, 0.95);
-    border-color: rgba(37, 99, 235, 0.18);
-    background: rgba(37, 99, 235, 0.06);
-  }
-
-  .divider {
-    height: 1px;
-    background: rgba(15, 23, 42, 0.08);
-    margin: 14px 0 16px;
-  }
-
-  .list {
-    display: grid;
-    gap: 10px;
-    position: relative;
-  }
-
-  .item {
-    display: grid;
-    grid-template-columns: 16px 1fr;
-    gap: 12px;
-    align-items: start;
-    position: relative;
-  }
-
-  /* vertical line */
-  .item::before {
-    content: "";
-    position: absolute;
-    left: 7px;
-    top: 18px;
-    bottom: -10px;
-    width: 2px;
-    background: rgba(15, 23, 42, 0.08);
-  }
-  .item:last-child::before {
-    display: none;
-  }
-
-  .dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.12);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
-    margin-top: 6px;
-  }
-
-  /* === CARD BASE === */
-  .card {
-    border-radius: 16px;
-    background: rgba(248, 250, 252, 0.75);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
-    transition: transform 0.12s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-1px);
-  }
-
-  .top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .wkline {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-
-  .wk {
-    font-size: 14px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.82);
-    white-space: nowrap;
-  }
-
-  .mini {
-    font-size: 12px;
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.55);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .price {
-    font-size: 14px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    color: rgba(37, 99, 235, 0.95);
-  }
-
-  .desc {
-    margin-top: 6px;
-    font-size: 13px;
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.55);
-  }
-
-  /* === COMPACT (past/future) === */
-  .item.compact .card {
-    padding: 10px 12px; /* тоньше */
-    border-radius: 14px;
-  }
-
-  /* === FULL (current) === */
-  .item.full .card {
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .badge {
-    height: 22px;
-    padding: 0 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    background: rgba(37, 99, 235, 0.08);
-    color: rgba(37, 99, 235, 0.95);
-    white-space: nowrap;
-  }
-
-  /* === STATES === */
-
-  /* Past = зелёный (как ты сказал) */
-  .item.past .dot {
-    background: #22c55e;
-  }
-  .item.past .price {
-    color: #22c55e;
-  }
-  .item.past .card {
-    background: rgba(34, 197, 94, 0.06);
-    border-color: rgba(34, 197, 94, 0.16);
-  }
-
-  /* Current = выделение (потолще, акцент) */
-  .item.current .dot {
-    background: rgba(37, 99, 235, 0.95);
-  }
-  .item.current .card {
-    background: rgba(37, 99, 235, 0.06);
-    border-color: rgba(37, 99, 235, 0.18);
-    box-shadow:
-      0 18px 36px rgba(37, 99, 235, 0.1),
-      0 12px 26px rgba(15, 23, 42, 0.05);
-  }
-
-  /* Future = нейтрально, тонко */
-  .item.future .dot {
-    background: rgba(15, 23, 42, 0.12);
-  }
-  .item.future .price {
-    color: rgba(37, 99, 235, 0.85);
-  }
-
-  .footer {
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
-  }
-
-  .goal {
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.65);
-    text-align: center;
-  }
-
-  .goal b {
-    color: rgba(15, 23, 42, 0.9);
-    font-weight: 950;
-  }
-
-  @media (max-width: 980px) {
-    .wrap {
-      padding: 16px;
-      border-radius: 18px;
-    }
-    .title {
-      font-size: 16px;
-    }
-  }
+}
 </style>
