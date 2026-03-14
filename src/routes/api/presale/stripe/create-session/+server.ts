@@ -17,6 +17,7 @@ function parseUsd(v: unknown) {
   const s = String(v ?? "").replace(",", ".").trim();
   const n = Number(s);
   if (!Number.isFinite(n) || n <= 0) throw error(400, "Invalid payAmount");
+  if (n < 0.5) throw error(400, "Minimum purchase amount is $0.50");
   return n;
 }
 
@@ -64,6 +65,7 @@ export const POST = async ({ request, cookies, url }: RequestEvent) => {
       select: { id: true, email: true, wallet: { select: { id: true } } },
     });
     if (!user) throw error(401, "Unauthorized");
+    if (!user.wallet?.id) throw error(400, "Wallet required for presale purchase");
 
     // ---- body ----
     const body = await request.json().catch(() => null);
