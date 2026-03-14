@@ -1,4 +1,27 @@
-<!-- src/routes/vision/+page.svelte -->
+<script>
+  /** Добавляет shimmer на родителя и fade-in на изображение при загрузке */
+  function imgReveal(node) {
+    const parent = node.parentElement;
+    if (parent) parent.dataset.imgState = "loading";
+
+    function reveal() {
+      node.style.opacity = "1";
+      if (parent) parent.dataset.imgState = "loaded";
+    }
+
+    if (node.complete && node.naturalHeight !== 0) {
+      reveal();
+    } else {
+      node.addEventListener("load", reveal, { once: true });
+    }
+
+    return {
+      destroy() {
+        node.removeEventListener("load", reveal);
+      },
+    };
+  }
+</script>
 
 <section class="vision">
   <div class="wrap">
@@ -25,6 +48,8 @@
             src="/images/hangar-out.png"
             alt="Hangar exterior, concept photo"
             loading="eager"
+            fetchpriority="high"
+            use:imgReveal
           />
         </figure>
 
@@ -35,6 +60,8 @@
             src="/images/airport-concept.png"
             alt="Airport placement, concept map"
             loading="eager"
+            fetchpriority="high"
+            use:imgReveal
           />
         </figure>
       </div>
@@ -90,22 +117,22 @@
 
       <div class="gallery galleryHangar">
         <figure class="shot">
-          <img class="img imgTall" src="/images/hangar-out.png" alt="Hangar exterior, concept photo" loading="lazy" />
+          <img class="img imgTall" src="/images/hangar-out.png" alt="Hangar exterior, concept photo" loading="lazy" use:imgReveal />
           <figcaption class="cap">Hangar exterior, concept photo</figcaption>
         </figure>
 
         <figure class="shot">
-          <img class="img imgTall" src="/images/hangar-in.png" alt="Hangar interior, concept photo" loading="lazy" />
+          <img class="img imgTall" src="/images/hangar-in.png" alt="Hangar interior, concept photo" loading="lazy" use:imgReveal />
           <figcaption class="cap">Hangar interior, concept photo</figcaption>
         </figure>
 
         <figure class="shot">
-          <img class="img imgTall" src="/images/staff-room.png" alt="Workshop / operational area, concept photo" loading="lazy" />
+          <img class="img imgTall" src="/images/staff-room.png" alt="Workshop / operational area, concept photo" loading="lazy" use:imgReveal />
           <figcaption class="cap">Workshop / operational area, concept photo</figcaption>
         </figure>
 
         <figure class="shot">
-          <img class="img imgTall" src="/images/developing.png" alt="Development / buildout phase, concept photo" loading="lazy" />
+          <img class="img imgTall" src="/images/developing.png" alt="Development / buildout phase, concept photo" loading="lazy" use:imgReveal />
           <figcaption class="cap">Development / buildout phase, concept photo</figcaption>
         </figure>
       </div>
@@ -133,6 +160,7 @@
             src="/images/fly-hangar.png"
             alt="Airport location, overview map"
             loading="lazy"
+            use:imgReveal
           />
         </div>
 
@@ -156,12 +184,12 @@
 
       <div class="gallery galleryAirport">
         <figure class="shot">
-          <img class="img imgBig" src="/images/airport-concept.png" alt="Airport location, overview" loading="lazy" />
+          <img class="img imgBig" src="/images/airport-concept.png" alt="Airport location, overview" loading="lazy" use:imgReveal />
           <figcaption class="cap">Airport location, overview</figcaption>
         </figure>
 
         <figure class="shot">
-          <img class="img imgBig" src="/images/staff.png" alt="Team / engineering presence, concept photo" loading="lazy" />
+          <img class="img imgBig" src="/images/staff.png" alt="Team / engineering presence, concept photo" loading="lazy" use:imgReveal />
           <figcaption class="cap">Team / engineering presence, concept photo</figcaption>
         </figure>
       </div>
@@ -214,30 +242,40 @@
           </div>
         </div>
 
-        <div class="ctaRight">
+        <!-- <div class="ctaRight">
           <a class="btnPrimaryDark" href="/contact">Request a call →</a>
           <a class="btnGhostDark" href="/partners">Partner program</a>
-        </div>
+        </div> -->
       </div>
     </section>
   </div>
 </section>
-
 <style>
   .vision {
     padding: 32px 16px 96px;
   }
+
   .wrap {
     max-width: 1200px;
     margin: 0 auto;
   }
 
+  /* =========================
+     HERO (hub style)
+     ========================= */
+
   .hero {
     border-radius: 28px;
     overflow: hidden;
-    padding: 26px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(79, 70, 229, 1));
-    box-shadow: 0 26px 70px rgba(15, 23, 42, 0.18);
+    padding: 34px 28px;
+    background:
+      radial-gradient(900px 460px at 30% -140px, rgba(176, 141, 87, 0.16), transparent 62%),
+      radial-gradient(760px 420px at 70% -120px, rgba(37, 99, 235, 0.10), transparent 60%),
+      var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -245,173 +283,186 @@
 
   .heroTitle {
     margin: 0;
-    font-size: 48px;
-    font-weight: 950;
-    letter-spacing: -0.04em;
-    font-style: italic;
-    color: #fff;
-    max-width: 920px;
-  }
-  @media (max-width: 640px) {
-    .heroTitle {
-      font-size: 32px;
-    }
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    max-width: 980px;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
 
   .heroText {
     margin: 0;
-    color: rgba(255, 255, 255, 0.86);
-    max-width: 820px;
-    line-height: 1.55;
-    font-weight: 800;
-    font-size: 14px;
+    max-width: 78ch;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text-muted);
   }
 
   .heroCtas {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
-    margin-top: 6px;
+    margin-top: 8px;
+  }
+
+  .btnPrimary,
+  .btnGhost,
+  .btnPrimaryDark,
+  .btnGhostDark {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease;
+    white-space: nowrap;
   }
 
   .btnPrimary {
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 999px;
-    background: #fff;
-    color: #0f172a;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-    transition: transform 0.12s ease, filter 0.12s ease;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    box-shadow:
+      0 18px 46px rgba(37, 99, 235, 0.26),
+      0 8px 20px rgba(18, 20, 22, 0.10);
   }
+
   .btnPrimary:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.03);
+    transform: translateY(-2px);
+    box-shadow:
+      0 26px 70px rgba(37, 99, 235, 0.28),
+      0 10px 26px rgba(18, 20, 22, 0.12);
   }
 
   .btnGhost {
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    transition: transform 0.12s ease, filter 0.12s ease;
+    background: rgba(176, 141, 87, 0.08);
+    color: rgba(120, 86, 36, 0.92);
+    border: 1px solid rgba(176, 141, 87, 0.22);
+    box-shadow: 0 14px 34px rgba(18, 20, 22, 0.06);
   }
+
   .btnGhost:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.03);
+    transform: translateY(-2px);
+    border-color: rgba(176, 141, 87, 0.34);
+    box-shadow: 0 22px 54px rgba(18, 20, 22, 0.08);
   }
 
   .heroMedia {
-    margin-top: 8px;
+    margin-top: 10px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }
-  @media (max-width: 820px) {
-    .heroMedia {
-      grid-template-columns: 1fr;
-    }
-  }
 
   .mediaCard {
     border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-soft);
+    background: rgba(15, 23, 42, 0.02);
     padding: 14px;
     overflow: hidden;
     margin: 0;
+    box-shadow: 0 14px 34px rgba(18, 20, 22, 0.06);
   }
+
   .mediaLabel {
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(15, 23, 42, 0.55);
     margin-bottom: 10px;
+    font-weight: 600;
   }
+
   .heroImg {
     width: 100%;
-    height: 240px; /* bigger in hero */
+    height: 240px;
     object-fit: cover;
     border-radius: 18px;
     display: block;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-  }
-  @media (max-width: 640px) {
-    .heroImg {
-      height: 260px;
-    }
+    border: 1px solid var(--border-soft);
+    opacity: 0;
+    transition: opacity 0.5s ease;
   }
 
+  /* =========================
+     SECTIONS
+     ========================= */
+
   .section {
-    padding: 34px 0;
+    padding: 80px 0 0;
   }
+
   .sectionHeader {
-    margin-bottom: 18px;
+    text-align: center;
+    margin-bottom: 26px;
   }
+
   .title {
     margin: 0;
-    font-size: 22px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
   .sub {
-    margin: 8px 0 0;
-    color: rgba(15, 23, 42, 0.6);
-    font-weight: 800;
-    font-size: 13px;
-    max-width: 860px;
+    margin: 14px auto 0;
+    max-width: 70ch;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text-muted);
   }
 
+  /* =========================
+     CARDS 3
+     ========================= */
+
   .cards3 {
+    margin-top: 26px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 26px;
-  }
-  @media (max-width: 1024px) {
-    .cards3 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  @media (max-width: 640px) {
-    .cards3 {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
+    gap: 18px;
   }
 
   .infoCard {
-    text-align: left;
-    padding: 28px 26px 30px;
-    border-radius: 24px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 6px 18px rgba(15, 23, 42, 0.06);
+    padding: 26px;
+    border-radius: 28px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .infoCard:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 40px 110px rgba(18, 20, 22, 0.10),
+      0 10px 28px rgba(18, 20, 22, 0.08);
   }
 
   .ico {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.04);
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    background: rgba(176, 141, 87, 0.10);
+    border: 1px solid rgba(176, 141, 87, 0.22);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -420,253 +471,304 @@
 
   .cardTitle {
     margin-top: 16px;
-    font-size: 18px;
-    font-weight: 800;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
-  }
-  .cardText {
-    margin-top: 10px;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
-    font-weight: 800;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
 
-  /* BIGGER + MOBILE-FRIENDLY GALLERIES */
+  .cardText {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+    max-width: 60ch;
+  }
+
+  /* =========================
+     GALLERIES
+     ========================= */
+
   .gallery {
     display: grid;
     gap: 16px;
+    margin-top: 22px;
   }
 
-  /* Hangar gallery: 2 columns on desktop, 1 column on mobile (big cards) */
-  .galleryHangar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  @media (max-width: 860px) {
-    .galleryHangar {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* Airport gallery: 2 columns on desktop, 1 column on mobile (big) */
+  .galleryHangar,
   .galleryAirport {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  @media (max-width: 860px) {
-    .galleryAirport {
-      grid-template-columns: 1fr;
-    }
   }
 
   .shot {
     margin: 0;
-    border-radius: 24px;
+    border-radius: 28px;
     overflow: hidden;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 6px 18px rgba(15, 23, 42, 0.06);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
   }
 
   .img {
     width: 100%;
     object-fit: cover;
     display: block;
-    background: rgba(15, 23, 42, 0.04);
+    opacity: 0;
+    transition: opacity 0.5s ease;
   }
 
-  /* Larger images by default */
   .imgTall {
     height: 360px;
   }
+
   .imgBig {
     height: 420px;
   }
 
-  /* Mobile: keep them large and readable */
-  @media (max-width: 640px) {
-    .imgTall {
-      height: 300px;
-    }
-    .imgBig {
-      height: 320px;
-    }
-  }
-
   .cap {
     padding: 12px 14px;
-    font-size: 12px;
-    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     color: rgba(15, 23, 42, 0.55);
+    font-weight: 600;
+    border-top: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    position: relative;
+    z-index: 1;
   }
+
+  /* =========================
+     IMAGE SHIMMER
+     ========================= */
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  [data-img-state="loading"] {
+    background: linear-gradient(
+      90deg,
+      rgba(18, 20, 22, 0.04) 25%,
+      rgba(18, 20, 22, 0.09) 50%,
+      rgba(18, 20, 22, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+
+  [data-img-state="loaded"] {
+    animation: none;
+    background: none;
+  }
+
+  /* =========================
+     LOCATION
+     ========================= */
 
   .locationGrid {
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
-    gap: 26px;
+    gap: 18px;
+    margin-top: 22px;
     margin-bottom: 16px;
-  }
-  @media (max-width: 1024px) {
-    .locationGrid {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
   }
 
   .mapCard {
-    border-radius: 24px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 6px 18px rgba(15, 23, 42, 0.06);
+    border-radius: 28px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     overflow: hidden;
   }
+
   .mapTop {
-    padding: 16px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background:
+      radial-gradient(620px 260px at 20% 0%, rgba(176, 141, 87, 0.12), transparent 60%),
+      var(--bg-white);
   }
+
   .mapTitle {
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(15, 23, 42, 0.80);
   }
+
   .mapHint {
     margin-top: 6px;
-    font-size: 12px;
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.55);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    max-width: 62ch;
   }
 
   .mapImg {
     width: 100%;
-    height: 360px; /* bigger map */
+    height: 360px;
     object-fit: cover;
     display: block;
-    background: rgba(15, 23, 42, 0.03);
-  }
-  @media (max-width: 640px) {
-    .mapImg {
-      height: 300px;
-    }
+    opacity: 0;
+    transition: opacity 0.5s ease;
   }
 
   .locationSide {
     display: grid;
-    gap: 20px;
+    gap: 18px;
   }
 
   .sideCard {
-    border-radius: 24px;
+    border-radius: 28px;
     padding: 18px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 6px 18px rgba(15, 23, 42, 0.06);
-  }
-  .k {
-    font-size: 11px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: #64748b;
-    font-weight: 900;
-  }
-  .v {
-    margin-top: 10px;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
-    font-weight: 800;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
   }
 
+  .k {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .v {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+  }
+
+  /* =========================
+     TIMELINE
+     ========================= */
+
   .timeline {
+    margin-top: 22px;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 26px;
-  }
-  @media (max-width: 1024px) {
-    .timeline {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  @media (max-width: 640px) {
-    .timeline {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
+    gap: 18px;
   }
 
   .milestone {
-    border-radius: 24px;
+    border-radius: 28px;
     padding: 18px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 6px 18px rgba(15, 23, 42, 0.06);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
   }
+
+  .milestone:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 40px 110px rgba(18, 20, 22, 0.10),
+      0 10px 28px rgba(18, 20, 22, 0.08);
+  }
+
   .badge {
     width: fit-content;
     height: 28px;
     padding: 0 12px;
     border-radius: 999px;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    color: rgba(15, 23, 42, 0.72);
-  }
-  .msTitle {
-    font-size: 18px;
-    font-weight: 800;
+
+    font-size: 11px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
-  }
-  .msText {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
-    font-weight: 800;
+    font-weight: 600;
+
+    background: rgba(176, 141, 87, 0.10);
+    border: 1px solid rgba(176, 141, 87, 0.22);
+    color: rgba(120, 86, 36, 0.92);
   }
 
-  .cta {
-    padding: 16px 0 0;
+  .msTitle {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
   }
+
+  .msText {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+  }
+
+  /* =========================
+     CTA
+     ========================= */
+
+  .cta {
+    padding: 80px 0 0;
+  }
+
   .ctaCard {
-    border-radius: 24px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 6px 18px rgba(15, 23, 42, 0.06);
+    border-radius: 28px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     padding: 22px;
     display: flex;
     justify-content: space-between;
     gap: 18px;
     align-items: flex-start;
   }
-  @media (max-width: 1024px) {
-    .ctaCard {
-      flex-direction: column;
-    }
-  }
 
   .ctaTitle {
-    font-size: 18px;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    color: #0f172a;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
+
   .ctaText {
     margin-top: 10px;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
-    font-weight: 800;
-    max-width: 720px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+    max-width: 72ch;
   }
+
   .ctaRight {
     display: flex;
     gap: 12px;
@@ -674,45 +776,107 @@
   }
 
   .btnPrimaryDark {
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 999px;
-    background: #0f172a;
+    background: var(--text-main);
     color: #fff;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
     border: 1px solid rgba(15, 23, 42, 0.12);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-    transition: transform 0.12s ease, filter 0.12s ease;
+    box-shadow:
+      0 18px 46px rgba(15, 23, 42, 0.22),
+      0 8px 20px rgba(18, 20, 22, 0.10);
   }
+
   .btnPrimaryDark:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.03);
+    transform: translateY(-2px);
+    box-shadow:
+      0 26px 70px rgba(15, 23, 42, 0.26),
+      0 10px 26px rgba(18, 20, 22, 0.12);
   }
 
   .btnGhostDark {
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 999px;
     background: rgba(15, 23, 42, 0.04);
-    color: #0f172a;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    transition: transform 0.12s ease, filter 0.12s ease;
+    color: var(--text-main);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 14px 34px rgba(18, 20, 22, 0.06);
   }
+
   .btnGhostDark:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.03);
+    transform: translateY(-2px);
+    border-color: rgba(15, 23, 42, 0.12);
+    box-shadow: 0 22px 54px rgba(18, 20, 22, 0.08);
+  }
+
+  /* =========================
+     RESPONSIVE
+     ========================= */
+
+  @media (max-width: 1024px) {
+    .heroTitle {
+      font-size: 34px;
+    }
+
+    .title {
+      font-size: 28px;
+    }
+
+    .cards3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .timeline {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 860px) {
+    .heroMedia {
+      grid-template-columns: 1fr;
+    }
+
+    .galleryHangar,
+    .galleryAirport {
+      grid-template-columns: 1fr;
+    }
+
+    .locationGrid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .vision {
+      padding: 28px 16px 80px;
+    }
+
+    .hero {
+      padding: 26px 18px;
+      border-radius: 22px;
+    }
+
+    .heroTitle {
+      font-size: 26px;
+    }
+
+    .heroImg {
+      height: 260px;
+    }
+
+    .title {
+      font-size: 24px;
+    }
+
+    .imgTall {
+      height: 300px;
+    }
+
+    .imgBig {
+      height: 320px;
+    }
+
+    .mapImg {
+      height: 300px;
+    }
+
+    .ctaCard {
+      flex-direction: column;
+    }
   }
 </style>
