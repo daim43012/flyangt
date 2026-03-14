@@ -174,66 +174,69 @@
   }
   .md{
     width: min(520px, 100%);
-    border-radius: 18px;
-    background: #fff;
-    border: 1px solid rgba(15,23,42,.08);
-    box-shadow: 0 24px 60px rgba(15,23,42,.22);
+    border-radius: 20px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 30px 90px rgba(18,20,22,.22);
     padding: 14px;
   }
   .hd{
     display:flex; align-items:center; justify-content:space-between;
     gap: 10px;
   }
-  .ttl{ font-weight: 950; font-size: 16px; }
+  .ttl{ font-weight: 600; font-size: 16px; font-family: var(--font-heading); color: var(--text-main); }
   .x{
-    border: 1px solid rgba(15,23,42,.10);
-    background: rgba(15,23,42,.03);
+    border: 1px solid var(--border-soft);
+    background: rgba(176,141,87,.06);
     border-radius: 10px;
     height: 32px; width: 32px;
     cursor: pointer;
+    color: var(--text-main);
   }
   .sub{
     margin-top: 6px;
     font-size: 12px;
-    font-weight: 800;
-    color: rgba(15,23,42,.55);
+    font-weight: 600;
+    color: var(--text-muted);
   }
   .box{
     margin-top: 12px;
     border-radius: 14px;
-    border: 1px solid rgba(15,23,42,.06);
-    background: rgba(15,23,42,.02);
+    border: 1px solid var(--border-soft);
+    background: rgba(176,141,87,.03);
     padding: 10px;
   }
   .row{ display:flex; justify-content:space-between; gap: 10px; padding: 6px 2px; }
-  .lbl{ font-size: 12px; font-weight: 800; color: rgba(15,23,42,.55); }
-  .val{ font-size: 12px; font-weight: 900; color: rgba(15,23,42,.92); }
+  .lbl{ font-size: 12px; font-weight: 600; color: var(--text-muted); }
+  .val{ font-size: 12px; font-weight: 600; color: var(--text-main); }
 
   .form{ margin-top: 12px; display:grid; gap: 10px; }
   .field{ display:grid; gap: 6px; }
-  .flbl{ font-size: 11px; font-weight: 900; letter-spacing:.10em; text-transform: uppercase; color: rgba(15,23,42,.45); }
+  .flbl{ font-size: 11px; font-weight: 600; letter-spacing:.10em; text-transform: uppercase; color: var(--text-muted); }
 
   .inpwrap{ display:flex; gap: 8px; }
   .inp{
     width: 100%;
     height: 40px;
     border-radius: 12px;
-    border: 1px solid rgba(15,23,42,.12);
+    border: 1px solid var(--border-soft);
     padding: 0 12px;
-    font-weight: 800;
+    font-weight: 600;
     outline: none;
+    color: var(--text-main);
   }
   .max{
     height: 40px;
     padding: 0 10px;
     border-radius: 12px;
-    border: 1px solid rgba(15,23,42,.12);
-    background: rgba(15,23,42,.03);
-    font-weight: 900;
+    border: 1px solid var(--border-soft);
+    background: rgba(176,141,87,.06);
+    font-weight: 600;
     cursor: pointer;
+    color: var(--text-main);
   }
 
-  .hint{ font-size: 12px; color: rgba(15,23,42,.55); font-weight: 700; }
+  .hint{ font-size: 12px; color: var(--text-muted); font-weight: 600; }
 
   .err{
     margin-top: 10px;
@@ -242,7 +245,7 @@
     border: 1px solid rgba(239,68,68,.22);
     background: rgba(239,68,68,.06);
     color: rgba(127,29,29,.95);
-    font-weight: 800;
+    font-weight: 600;
     font-size: 12px;
   }
 
@@ -251,12 +254,14 @@
     width: 100%;
     height: 44px;
     border-radius: 14px;
-    border: 1px solid rgba(15,23,42,.10);
-    background: rgba(37,99,235,.92);
+    border: 1px solid rgba(176,141,87,.3);
+    background: var(--accent);
     color: white;
-    font-weight: 950;
+    font-weight: 600;
     cursor: pointer;
+    transition: filter 0.12s ease;
   }
+  .btn:hover{ filter: brightness(1.08); }
   .btn:disabled{ opacity: .6; cursor: not-allowed; }
 
   .foot{
@@ -266,8 +271,8 @@
     gap: 10px;
     flex-wrap: wrap;
   }
-  .mini{ font-size: 11px; font-weight: 800; color: rgba(15,23,42,.55); }
+  .mini{ font-size: 11px; font-weight: 600; color: var(--text-muted); }
   .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-  .lnk{ color: rgba(37,99,235,.95); text-decoration: none; font-weight: 900; }
+  .lnk{ color: var(--accent-dark); text-decoration: none; font-weight: 600; }
   .lnk:hover{ text-decoration: underline; }
 </style>
