@@ -5,8 +5,8 @@ import { verifyJwt } from "$lib/jwt";
 import prisma from "$lib/prisma";
 import { verifyMessage } from "ethers";
 
-const WALLET_CONNECT_REWARD = 100;
-const REFERRAL_WALLET_REWARD = 100;
+const WALLET_CONNECT_REWARD = 50;
+const REFERRAL_WALLET_REWARD = 150;
 
 export const POST: RequestHandler = async ({ cookies, request }) => {
   const token = cookies.get("auth_token");
