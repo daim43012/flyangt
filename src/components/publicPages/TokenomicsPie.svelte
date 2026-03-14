@@ -2,7 +2,7 @@
   export let total = 500000000;
 
   export let segments = [
-{ key: "treasury", label: "Treasury Fund", pct: 35, cls: "s1" },
+    { key: "treasury", label: "Treasury Fund", pct: 35, cls: "s1" },
     { key: "dev", label: "Dev Team", pct: 5, cls: "s2" },
     { key: "presale", label: "Presale", pct: 10, cls: "s3" },
     { key: "airdrop", label: "Airdrop", pct: 3, cls: "s4" },
@@ -18,8 +18,8 @@
 
   let localActive: string | null = null;
 
-  const C = 110;
-  const R = 78;
+  const C = 110;   // центр остаётся тем же
+  const R = 92;    // увеличенный радиус
   const TAU = Math.PI * 2;
 
   const fmt = (n: number) => n.toLocaleString("en-US");
@@ -53,7 +53,6 @@
 
 <div class="pie-card" on:mouseleave={() => (localActive = null)}>
   <div class="pie-wrap">
-    <!-- ✅ увеличили viewBox и размеры -->
     <svg viewBox="0 0 220 220" class="pie" role="img" aria-label="Allocation pie chart">
       <circle cx={C} cy={C} r={R} class="pie-base"></circle>
 
@@ -68,9 +67,9 @@
         />
       {/each}
 
-      <!-- ✅ чуть больше отверстие тоже -->
-      <circle cx={C} cy={C} r="52" class="pie-hole"></circle>
-      <circle cx={C} cy={C} r="58" class="pie-ring"></circle>
+      <!-- увеличили внутреннюю дырку для сохранения пропорций -->
+      <circle cx={C} cy={C} r="60" class="pie-hole"></circle>
+      <circle cx={C} cy={C} r="66" class="pie-ring"></circle>
     </svg>
 
     <div class="pie-center">
@@ -96,41 +95,55 @@
 <style>
   .pie-card {
     padding: 18px;
-    border-radius: 18px;
-    background: rgba(15, 23, 42, 0.03);
+    border-radius: 22px;
+    background: rgba(15, 23, 42, 0.02);
     border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.02);
+    box-shadow:
+      inset 0 0 0 1px rgba(15, 23, 42, 0.02),
+      0 18px 60px rgba(15, 23, 42, 0.06);
+    transition:
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      border-color 0.45s ease;
+  }
+
+  .pie-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      inset 0 0 0 1px rgba(15, 23, 42, 0.02),
+      0 28px 86px rgba(15, 23, 42, 0.10),
+      0 10px 26px rgba(15, 23, 42, 0.06);
+    border-color: rgba(176, 141, 87, 0.22);
   }
 
   .pie-wrap {
     position: relative;
     display: grid;
     place-items: center;
-    min-height: 300px; /* чуть больше */
+    min-height: 320px;
   }
 
   .pie {
-    width: 300px;  /* ✅ было 260 */
-    height: 300px;
+    width: 320px;
+    height: 320px;
     filter: drop-shadow(0 18px 44px rgba(15, 23, 42, 0.11));
   }
 
   .pie-base {
-    fill: rgba(15, 23, 42, 0.035);
+    fill: rgba(15, 23, 42, 0.03);
     stroke: rgba(15, 23, 42, 0.06);
     stroke-width: 1;
   }
 
   .pie-hole {
-    fill: #fff;
+    fill: var(--bg-white);
     stroke: rgba(15, 23, 42, 0.06);
     stroke-width: 1;
   }
 
-  /* тонкое декоративное кольцо */
   .pie-ring {
     fill: none;
-    stroke: rgba(56, 189, 248, 0.18);
+    stroke: rgba(37, 99, 235, 0.16);
     stroke-width: 2;
   }
 
@@ -138,16 +151,16 @@
     cursor: pointer;
     opacity: 0.92;
     transform-origin: 110px 110px;
-    transition: transform 170ms ease, opacity 170ms ease, filter 170ms ease;
     outline: none;
-
-    /* ✅ “расстояние” между секциями: тонкий разделитель */
+    transition:
+      transform 0.22s ease,
+      opacity 0.22s ease,
+      filter 0.22s ease;
     stroke: rgba(255, 255, 255, 0.92);
     stroke-width: 2;
     vector-effect: non-scaling-stroke;
   }
 
-  /* ✅ сильнее выплывает */
   .slice:hover,
   .slice:focus {
     opacity: 1;
@@ -161,19 +174,16 @@
     filter: drop-shadow(0 18px 34px rgba(15, 23, 42, 0.20));
   }
 
-  /* ✅ небесно голубая палитра (без зелени, без слишком тёмных) */
-  .s1  { fill: rgba(30, 64, 175, 0.70); }  /* indigo soft */
-  .s2  { fill: rgba(37, 99, 235, 0.64); }  /* blue */
-  .s3  { fill: rgba(59, 130, 246, 0.58); } /* blue mid */
-  .s4  { fill: rgba(96, 165, 250, 0.55); } /* light blue */
-
-  .s5  { fill: rgba(14, 165, 233, 0.56); } /* sky */
-  .s6  { fill: rgba(56, 189, 248, 0.52); } /* sky light */
-  .s7  { fill: rgba(125, 211, 252, 0.52); }/* sky softer */
-  .s8  { fill: rgba(186, 230, 253, 0.72); }/* pale sky */
-
-  .s9  { fill: rgba(147, 197, 253, 0.46); }/* very soft */
-  .s10 { fill: rgba(203, 213, 225, 0.60); }/* slate light */
+  .s1  { fill: rgba(205, 170, 115, 0.85); }
+  .s2  { fill: rgba(220, 185, 135, 0.82); }
+  .s3  { fill: rgba(235, 200, 155, 0.80); }
+  .s4  { fill: rgba(244, 214, 176, 0.78); }
+  .s5  { fill: rgba(214, 176, 120, 0.80); }
+  .s6  { fill: rgba(226, 192, 150, 0.78); }
+  .s7  { fill: rgba(238, 210, 170, 0.78); }
+  .s8  { fill: rgba(247, 225, 195, 0.85); }
+  .s9  { fill: rgba(225, 215, 190, 0.75); }
+  .s10 { fill: rgba(242, 235, 220, 0.90); }
 
   .pie-center {
     position: absolute;
@@ -186,61 +196,73 @@
   }
 
   .pie-kicker {
-    font-size: 10px;
-    letter-spacing: 0.22em;
+    font-size: 11px;
+    letter-spacing: 0.26em;
     text-transform: uppercase;
-    color: #64748b;
-    margin-top: 2px;
+    color: var(--text-muted);
+    font-weight: 600;
   }
 
   .pie-title {
-    margin-top: 8px;
+    margin-top: 10px;
     font-size: 18px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
   }
 
   .pie-meta {
-    margin-top: 10px;
+    margin-top: 12px;
     display: inline-flex;
     gap: 10px;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    font-size: 12.5px;
+    font-size: 14px;
   }
 
   .pill-lite {
-    font-size: 10px;
-    letter-spacing: 0.18em;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    padding: 6px 10px;
+    padding: 7px 10px;
     border-radius: 999px;
     border: 1px solid rgba(15, 23, 42, 0.12);
     background: rgba(15, 23, 42, 0.03);
-    color: rgba(15, 23, 42, 0.78);
+    color: rgba(15, 23, 42, 0.72);
     white-space: nowrap;
   }
 
   .pill-lite.neutral {
     border-color: rgba(15, 23, 42, 0.12);
     background: rgba(15, 23, 42, 0.03);
-    color: rgba(15, 23, 42, 0.78);
+    color: rgba(15, 23, 42, 0.72);
   }
 
-  /* tint pill borders a bit sky */
-  .pill-lite.s1, .pill-lite.s2, .pill-lite.s3, .pill-lite.s4,
-  .pill-lite.s5, .pill-lite.s6, .pill-lite.s7, .pill-lite.s8, .pill-lite.s9 {
-    border-color: rgba(56, 189, 248, 0.30);
+  .pill-lite.s1,
+  .pill-lite.s2,
+  .pill-lite.s3,
+  .pill-lite.s4,
+  .pill-lite.s5,
+  .pill-lite.s6,
+  .pill-lite.s7,
+  .pill-lite.s8,
+  .pill-lite.s9,
+  .pill-lite.s10 {
+    border-color: rgba(37, 99, 235, 0.22);
+    background: rgba(37, 99, 235, 0.08);
   }
 
-  .muted { color: #64748b; }
+  .muted { color: var(--text-muted); }
 
   @media (max-width: 720px) {
-    .pie { width: 270px; height: 270px; }
-    .pie-wrap { min-height: 270px; }
+    .pie {
+      width: 290px;
+      height: 290px;
+    }
+    .pie-wrap {
+      min-height: 290px;
+    }
   }
 </style>
