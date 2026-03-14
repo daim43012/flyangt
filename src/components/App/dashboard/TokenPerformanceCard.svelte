@@ -161,12 +161,12 @@
 
 <style>
   .card {
-    border-radius: 22px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
     box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 6px 14px rgba(15, 23, 42, 0.05);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     overflow: hidden;
     padding: 16px 16px 14px;
   }
@@ -180,9 +180,9 @@
 
   .kicker {
     font-size: 11px;
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: 0.12em;
-    color: rgba(15, 23, 42, 0.45);
+    color: var(--text-muted);
   }
 
   .title {
@@ -195,15 +195,16 @@
 
   .sym {
     font-size: 16px;
-    font-weight: 950;
+    font-weight: 600;
+    font-family: var(--font-heading);
     letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.95);
+    color: var(--text-main);
   }
 
   .name {
     font-size: 12px;
-    font-weight: 800;
-    color: rgba(15, 23, 42, 0.55);
+    font-weight: 600;
+    color: var(--text-muted);
   }
 
   .badge {
@@ -212,20 +213,20 @@
     padding: 0 12px;
     border-radius: 999px;
     font-size: 12px;
-    font-weight: 950;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(15, 23, 42, 0.03);
-    color: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border-soft);
+    background: rgba(18, 20, 22, 0.03);
+    color: var(--text-main);
   }
 
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.25);
+    background: rgba(18, 20, 22, 0.25);
   }
 
   .badge.up {
@@ -256,25 +257,26 @@
 
   .price .label {
     font-size: 12px;
-    color: rgba(15, 23, 42, 0.55);
-    font-weight: 800;
+    color: var(--text-muted);
+    font-weight: 600;
   }
 
   .price .value {
     margin-top: 6px;
     font-size: 26px;
     line-height: 1.05;
-    font-weight: 950;
+    font-weight: 600;
+    font-family: var(--font-heading);
     letter-spacing: -0.03em;
-    color: rgba(15, 23, 42, 0.95);
+    color: var(--text-main);
     font-variant-numeric: tabular-nums;
   }
 
   .delta {
     margin-top: 6px;
     font-size: 12px;
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.55);
+    font-weight: 600;
+    color: var(--text-muted);
   }
   .delta.up {
     color: rgba(6, 95, 70, 0.9);
@@ -287,15 +289,15 @@
     width: 150px;
     height: 54px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    background: rgba(15, 23, 42, 0.02);
+    border: 1px solid var(--border-soft);
+    background: rgba(176, 141, 87, 0.03);
     display: grid;
     place-items: center;
   }
 
   .sparkline {
     fill: none;
-    stroke: rgba(37, 99, 235, 0.9);
+    stroke: var(--accent);
     stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -305,7 +307,7 @@
     width: 120px;
     height: 10px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.08);
+    background: rgba(18, 20, 22, 0.08);
   }
 
   .stats {
@@ -318,23 +320,23 @@
   .stat {
     border-radius: 16px;
     padding: 10px 10px;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    background: rgba(15, 23, 42, 0.02);
+    border: 1px solid var(--border-soft);
+    background: rgba(176, 141, 87, 0.03);
   }
 
   .slabel {
     font-size: 11px;
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: 0.1em;
-    color: rgba(15, 23, 42, 0.45);
+    color: var(--text-muted);
     text-transform: uppercase;
   }
 
   .sval {
     margin-top: 6px;
     font-size: 13px;
-    font-weight: 950;
-    color: rgba(15, 23, 42, 0.95);
+    font-weight: 600;
+    color: var(--text-main);
     font-variant-numeric: tabular-nums;
   }
 
