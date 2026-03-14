@@ -25,7 +25,16 @@
         return;
       }
 
-      await goto('/app/dashboard');
+      const redirectTo = document.cookie
+        .split('; ')
+        .find(c => c.startsWith('redirectAfterLogin='))
+        ?.split('=').slice(1).join('=');
+
+      if (redirectTo) {
+        document.cookie = 'redirectAfterLogin=; path=/; max-age=0';
+      }
+
+      await goto(redirectTo ? decodeURIComponent(redirectTo) : '/app/dashboard');
     } catch (e) {
       error = 'Network error. Please try again.';
     } finally {
@@ -37,34 +46,33 @@
 <section class="auth">
   <div class="auth-card">
     <div class="auth-head">
-      <div class="auth-kicker">SECURE ACCESS</div>
-      <h1 class="auth-title">Member Login</h1>
-      <p class="auth-subtitle">Sign in to enter your private dashboard</p>
+      <p class="auth-subtitle">Secure access</p>
+      <h1 class="auth-title">Member login</h1>
+      <p class="auth-lead">Sign in to enter your private dashboard</p>
     </div>
 
-<a class="auth-google" href="/api/auth/google">
-  <span class="g-dot" aria-hidden="true"></span>
-  Continue with Google
-</a>
-
+    <a class="auth-google" href="/api/auth/google" aria-disabled={loading}>
+      <span class="g-dot" aria-hidden="true"></span>
+      Continue with Google
+    </a>
 
     <div class="auth-divider" aria-hidden="true">
       <span>or</span>
     </div>
 
     {#if error}
-      <div class="auth-error">{error}</div>
+      <div class="auth-error" role="alert">{error}</div>
     {/if}
 
     <form class="auth-form" on:submit|preventDefault={submit}>
       <label class="field">
         <span class="label">Email</span>
-        <input class="input" type="email" bind:value={email} required />
+        <input class="input" type="email" bind:value={email} required autocomplete="email" />
       </label>
 
       <label class="field">
         <span class="label">Password</span>
-        <input class="input" type="password" bind:value={password} required />
+        <input class="input" type="password" bind:value={password} required autocomplete="current-password" />
       </label>
 
       <div class="row">
@@ -89,41 +97,25 @@
 </section>
 
 <style>
-      .auth-error {
-    margin: 0 0 12px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(239, 68, 68, 0.22);
-    background: rgba(239, 68, 68, 0.06);
-    color: #991b1b;
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  .primary:disabled,
-  .auth-google:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    transform: none;
-  }
   .auth {
     min-height: calc(100vh - 120px);
     display: grid;
     place-items: center;
-    padding: 56px 16px 84px;
+    padding: 80px 16px 96px;
   }
 
   .auth-card {
     width: 100%;
     max-width: 520px;
     padding: 34px 32px 30px;
-    border-radius: 26px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 28px;
+
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+
     box-shadow:
-      0 24px 80px rgba(15, 23, 42, 0.10),
-      0 10px 26px rgba(15, 23, 42, 0.08);
-    backdrop-filter: blur(14px);
+      0 30px 90px rgba(18,20,22,0.08),
+      0 8px 22px rgba(18,20,22,0.06);
   }
 
   .auth-head {
@@ -131,50 +123,60 @@
     margin-bottom: 22px;
   }
 
-  .auth-kicker {
-    font-size: 10px;
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: #64748b;
-  }
-
   .auth-title {
     margin: 10px 0 0;
-    font-size: 34px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
-    color: #0f172a;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     line-height: 1.05;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
 
   .auth-subtitle {
-    margin: 10px 0 0;
-    font-size: 12px;
-    letter-spacing: 0.22em;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
-    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .auth-lead {
+    margin: 14px 0 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
   }
 
   .auth-google {
     width: 100%;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
-    cursor: pointer;
 
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    box-shadow: 0 14px 34px rgba(18,20,22,0.08);
+
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
 
-    font-size: 13px;
-    font-weight: 900;
-    color: #0f172a;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-main);
 
     transition:
       transform 0.35s ease,
@@ -185,14 +187,14 @@
   .auth-google:hover {
     transform: translateY(-2px);
     border-color: rgba(37, 99, 235, 0.22);
-    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.10);
+    box-shadow: 0 22px 54px rgba(18,20,22,0.10);
   }
 
   .g-dot {
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: #2563eb;
+    background: var(--accent);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
   }
 
@@ -209,17 +211,28 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: rgba(15, 23, 42, 0.08);
+    background: var(--border-soft);
   }
 
   .auth-divider span {
     position: relative;
     padding: 0 12px;
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--bg-white);
     font-size: 11px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
+  }
+
+  .auth-error {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    background: rgba(239, 68, 68, 0.06);
+    color: #991b1b;
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   .auth-form {
@@ -236,19 +249,19 @@
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .input {
     width: 100%;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
     outline: none;
 
     font-size: 14px;
-    color: #0f172a;
+    color: var(--text-main);
 
     transition:
       border-color 0.3s ease,
@@ -273,20 +286,21 @@
     align-items: center;
     gap: 10px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .checkbox {
     width: 16px;
     height: 16px;
     border-radius: 4px;
-    accent-color: #2563eb;
+    accent-color: var(--accent);
   }
 
   .link {
     font-size: 12px;
-    font-weight: 900;
-    color: #0f172a;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-main);
     text-decoration: none;
   }
 
@@ -301,14 +315,17 @@
     border: 0;
     cursor: pointer;
 
-    background: #2563eb;
+    background: var(--accent);
     color: #ffffff;
-    font-size: 13px;
-    font-weight: 900;
+
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
 
     box-shadow:
       0 18px 46px rgba(37, 99, 235, 0.28),
-      0 8px 20px rgba(15, 23, 42, 0.12);
+      0 8px 20px rgba(18,20,22,0.12);
 
     transition:
       transform 0.35s ease,
@@ -319,19 +336,27 @@
     transform: translateY(-2px);
     box-shadow:
       0 26px 70px rgba(37, 99, 235, 0.30),
-      0 10px 26px rgba(15, 23, 42, 0.14);
+      0 10px 26px rgba(18,20,22,0.14);
+  }
+
+  .primary:disabled,
+  .auth-google[aria-disabled="true"] {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
   }
 
   .hint {
     margin: 6px 0 0;
     font-size: 12px;
     text-align: center;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .hint a {
-    color: #0f172a;
-    font-weight: 900;
+    color: var(--text-main);
+    font-weight: 600;
     text-decoration: none;
   }
 
@@ -339,23 +364,24 @@
     text-decoration: underline;
   }
 
+  @media (max-width: 1024px) {
+    .auth-title {
+      font-size: 34px;
+    }
+  }
+
   @media (max-width: 640px) {
     .auth {
-      padding: 44px 16px 68px;
+      padding: 64px 16px 80px;
     }
 
     .auth-card {
       padding: 28px 22px 24px;
-      border-radius: 20px;
+      border-radius: 22px;
     }
 
     .auth-title {
-      font-size: 28px;
-    }
-
-    .auth-subtitle {
-      font-size: 11px;
-      letter-spacing: 0.18em;
+      font-size: 26px;
     }
   }
 </style>
