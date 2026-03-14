@@ -1,153 +1,155 @@
-<section class="paths">
+<section class="paths" id="paths">
   <div class="paths-header">
-    <h2 class="paths-title">DEFINE YOUR PATH</h2>
+    <h2 class="paths-title">Define your path</h2>
     <p class="paths-subtitle">
-      Select your primary engagement model within the ecosystem.
+      Select your primary engagement model within the ecosystem
     </p>
   </div>
-
   <div class="paths-grid">
-    <button class="path-card">
+    <a class="path-card" href="/configurator">
       <div class="path-icon">✈️</div>
-      <h3>I WANT TO FLY</h3>
+      <h3>I want to fly</h3>
       <p>
         Fly using charter flights or owned aircraft, with flexible payment
         options and access.
       </p>
-    </button>
+    </a>
 
-    <button class="path-card">
-      <div class="path-icon">👥</div>
-      <h3>I WANT TO FLY TOGETHER</h3>
-      <p>
-        Join a flying club or shared ownership structure to access aircraft
-        collectively.
-      </p>
-    </button>
-
-    <button class="path-card">
+    <a class="path-card" href="/app/dashboard">
       <div class="path-icon">📈</div>
-      <h3>I WANT TO EARN</h3>
+      <h3>I want to earn</h3>
       <p>
         Earn income from aircraft operations, rentals, staking, and partner
         pools.
       </p>
-    </button>
+    </a>
 
-    <button class="path-card">
-      <div class="path-icon">🔑</div>
-      <h3>I WANT TO OWN</h3>
-      <p>
-        Own an aircraft fully or fractionally — for personal use or as a
-        business asset.
-      </p>
-    </button>
-
-    <button class="path-card">
+    <a class="path-card" href="/app/dashboard">
       <div class="path-icon">💼</div>
-      <h3>I WANT TO INVEST</h3>
+      <h3>I want to invest</h3>
       <p>
-        Participate as an investor through presales, pools, or asset-backed
+        Participate as an investor through presales, pools, or asset backed
         structures.
       </p>
-    </button>
+    </a>
 
-    <button class="path-card">
+    <a class="path-card" href="/partner">
       <div class="path-icon">⚙️</div>
-      <h3>I WANT TO PARTNER</h3>
+      <h3>I want to partner</h3>
       <p>
         Join the ecosystem as an operator, advisor, manager, or strategic
         partner.
       </p>
-    </button>
+    </a>
   </div>
 </section>
 
 <style>
   .paths {
-    padding: 72px 16px 96px;
+    padding: 120px 16px;
     max-width: 1200px;
     margin: 0 auto;
   }
 
   .paths-header {
     text-align: center;
-    margin-bottom: 56px;
+    margin-bottom: 70px;
   }
 
   .paths-title {
-    font-size: 36px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
-    margin: 0;
-    color: #0f172a;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
   .paths-subtitle {
-    margin-top: 6px;
+    margin-top: 14px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .paths-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 26px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
   }
 
   .path-card {
+    appearance: none;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+
+    border-radius: 26px;
+    padding: 30px 28px 32px;
     text-align: left;
-    padding: 28px 26px 30px;
-    border-radius: 24px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+
     box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.08),
-      0 6px 18px rgba(15, 23, 42, 0.06);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
+
+    cursor: pointer;
+
     transition:
       transform 0.45s ease,
       box-shadow 0.45s ease,
-      border-color 0.45s ease;
-    cursor: pointer;
+      border-color 0.45s ease,
+      background 0.45s ease;
   }
 
   .path-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
     box-shadow:
-      0 26px 80px rgba(15, 23, 42, 0.12),
-      0 10px 28px rgba(15, 23, 42, 0.08);
+      0 40px 120px rgba(18, 20, 22, 0.12),
+      0 12px 34px rgba(18, 20, 22, 0.08);
+    border-color: rgba(176, 141, 87, 0.3);
+  }
+
+  .path-card:focus-visible {
+    outline: none;
+    border-color: rgba(176, 141, 87, 0.38);
+    box-shadow:
+      0 40px 120px rgba(18, 20, 22, 0.12),
+      0 12px 34px rgba(18, 20, 22, 0.08),
+      0 0 0 10px rgba(176, 141, 87, 0.12);
   }
 
   .path-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.04);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+
+    display: grid;
+    place-items: center;
     font-size: 20px;
+
+    border: 1px solid rgba(176, 141, 87, 0.22);
+    background: radial-gradient(
+      120% 160% at 15% 10%,
+      rgba(255, 255, 255, 0.9),
+      rgba(230, 210, 168, 0.4)
+    );
+
+    box-shadow:
+      0 16px 40px rgba(18, 20, 22, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 
   .path-card h3 {
-    margin: 16px 0 10px;
-    font-size: 18px;
-    font-weight: 800;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    color: #0f172a;
+    margin: 18px 0 10px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    color: var(--text-main);
   }
 
   .path-card p {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.55;
-    color: #64748b;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-muted);
   }
 
   @media (max-width: 1024px) {
@@ -158,22 +160,21 @@
 
   @media (max-width: 640px) {
     .paths {
-      padding: 56px 16px 72px;
+      padding: 80px 16px;
     }
 
     .paths-title {
-      font-size: 20px;
-      letter-spacing: 0.12em;
+      font-size: 30px;
     }
 
     .paths-grid {
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 24px;
     }
 
     .path-card {
-      padding: 24px 22px 26px;
-      border-radius: 20px;
+      padding: 26px 22px 28px;
+      border-radius: 22px;
     }
   }
 </style>
