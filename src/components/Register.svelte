@@ -35,7 +35,7 @@
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, email, password, referralCode }),
+        body: JSON.stringify({ name, email, password, referralCode })
       });
 
       if (!res.ok) {
@@ -56,12 +56,12 @@
 <section class="auth">
   <div class="auth-card">
     <div class="auth-head">
-      <div class="auth-kicker">ONBOARDING</div>
-      <h1 class="auth-title">Create Account</h1>
-      <p class="auth-subtitle">Get access first — connect Web3 later</p>
+      <p class="auth-subtitle">Onboarding</p>
+      <h1 class="auth-title">Create account</h1>
+      <p class="auth-lead">Get access first, connect Web3 later</p>
     </div>
 
-    <a class="auth-google" href="/api/auth/google">
+    <a class="auth-google" href="/api/auth/google{referralCode ? `?ref=${referralCode}` : ''}" aria-disabled={loading}>
       <span class="g-dot" aria-hidden="true"></span>
       Continue with Google
     </a>
@@ -71,30 +71,30 @@
     </div>
 
     {#if error}
-      <div class="auth-error">{error}</div>
+      <div class="auth-error" role="alert">{error}</div>
     {/if}
 
     <form class="auth-form" on:submit|preventDefault={submit}>
       <label class="field">
         <span class="label">Full name</span>
-        <input class="input" type="text" bind:value={name} required />
+        <input class="input" type="text" bind:value={name} required autocomplete="name" />
       </label>
 
       <label class="field">
         <span class="label">Email</span>
-        <input class="input" type="email" bind:value={email} required />
+        <input class="input" type="email" bind:value={email} required autocomplete="email" />
       </label>
 
       <label class="field">
         <span class="label">Password</span>
-        <input class="input" type="password" bind:value={password} required />
+        <input class="input" type="password" bind:value={password} required autocomplete="new-password" />
       </label>
 
       <label class="field">
         <span class="label">Confirm password</span>
-        <input class="input" type="password" bind:value={password2} required />
+        <input class="input" type="password" bind:value={password2} required autocomplete="new-password" />
       </label>
-      
+
       <label class="field">
         <span class="label">Referral code (optional)</span>
         <input
@@ -102,14 +102,14 @@
           type="text"
           bind:value={referralCode}
           placeholder="ABC123"
+          inputmode="text"
         />
       </label>
 
       <label class="agree">
         <input class="checkbox" type="checkbox" bind:checked={agree} />
         <span>
-          I agree to the <a href="/terms">Terms</a> and
-          <a href="/privacy">Privacy Policy</a>
+          I agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>
         </span>
       </label>
 
@@ -130,36 +130,21 @@
     min-height: calc(100vh - 120px);
     display: grid;
     place-items: center;
-    padding: 56px 16px 84px;
-  }
-  .auth-error {
-    margin: 0 0 12px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(239, 68, 68, 0.22);
-    background: rgba(239, 68, 68, 0.06);
-    color: #991b1b;
-    font-size: 13px;
-    line-height: 1.4;
+    padding: 80px 16px 96px;
   }
 
-  .primary:disabled,
-  .auth-google:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    transform: none;
-  }
   .auth-card {
     width: 100%;
     max-width: 520px;
     padding: 34px 32px 30px;
-    border-radius: 26px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 28px;
+
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+
     box-shadow:
-      0 24px 80px rgba(15, 23, 42, 0.1),
-      0 10px 26px rgba(15, 23, 42, 0.08);
-    backdrop-filter: blur(14px);
+      0 30px 90px rgba(18,20,22,0.08),
+      0 8px 22px rgba(18,20,22,0.06);
   }
 
   .auth-head {
@@ -167,50 +152,60 @@
     margin-bottom: 22px;
   }
 
-  .auth-kicker {
-    font-size: 10px;
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: #64748b;
-  }
-
   .auth-title {
     margin: 10px 0 0;
-    font-size: 34px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
-    color: #0f172a;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     line-height: 1.05;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
 
   .auth-subtitle {
-    margin: 10px 0 0;
-    font-size: 12px;
-    letter-spacing: 0.22em;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
-    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .auth-lead {
+    margin: 14px 0 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
   }
 
   .auth-google {
     width: 100%;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
-    cursor: pointer;
 
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    box-shadow: 0 14px 34px rgba(18,20,22,0.08);
+
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
 
-    font-size: 13px;
-    font-weight: 900;
-    color: #0f172a;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-main);
 
     transition:
       transform 0.35s ease,
@@ -221,14 +216,14 @@
   .auth-google:hover {
     transform: translateY(-2px);
     border-color: rgba(37, 99, 235, 0.22);
-    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.1);
+    box-shadow: 0 22px 54px rgba(18,20,22,0.10);
   }
 
   .g-dot {
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: #2563eb;
+    background: var(--accent);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
   }
 
@@ -245,17 +240,28 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: rgba(15, 23, 42, 0.08);
+    background: var(--border-soft);
   }
 
   .auth-divider span {
     position: relative;
     padding: 0 12px;
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--bg-white);
     font-size: 11px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
+  }
+
+  .auth-error {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    background: rgba(239, 68, 68, 0.06);
+    color: #991b1b;
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   .auth-form {
@@ -272,19 +278,19 @@
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .input {
     width: 100%;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
     outline: none;
 
     font-size: 14px;
-    color: #0f172a;
+    color: var(--text-main);
 
     transition:
       border-color 0.3s ease,
@@ -292,7 +298,7 @@
   }
 
   .input:focus {
-    border-color: rgba(37, 99, 235, 0.4);
+    border-color: rgba(37, 99, 235, 0.40);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
   }
 
@@ -300,15 +306,17 @@
     display: inline-flex;
     align-items: flex-start;
     gap: 10px;
+
     font-size: 12px;
-    color: #64748b;
     line-height: 1.55;
+    color: var(--text-muted);
+
     margin-top: 2px;
   }
 
   .agree a {
-    color: #0f172a;
-    font-weight: 900;
+    color: var(--text-main);
+    font-weight: 600;
     text-decoration: none;
   }
 
@@ -320,7 +328,7 @@
     width: 16px;
     height: 16px;
     border-radius: 4px;
-    accent-color: #2563eb;
+    accent-color: var(--accent);
     margin-top: 2px;
   }
 
@@ -331,14 +339,17 @@
     border: 0;
     cursor: pointer;
 
-    background: #2563eb;
+    background: var(--accent);
     color: #ffffff;
-    font-size: 13px;
-    font-weight: 900;
+
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
 
     box-shadow:
       0 18px 46px rgba(37, 99, 235, 0.28),
-      0 8px 20px rgba(15, 23, 42, 0.12);
+      0 8px 20px rgba(18,20,22,0.12);
 
     transition:
       transform 0.35s ease,
@@ -348,20 +359,28 @@
   .primary:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 26px 70px rgba(37, 99, 235, 0.3),
-      0 10px 26px rgba(15, 23, 42, 0.14);
+      0 26px 70px rgba(37, 99, 235, 0.30),
+      0 10px 26px rgba(18,20,22,0.14);
+  }
+
+  .primary:disabled,
+  .auth-google[aria-disabled="true"] {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
   }
 
   .hint {
     margin: 6px 0 0;
     font-size: 12px;
     text-align: center;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .hint a {
-    color: #0f172a;
-    font-weight: 900;
+    color: var(--text-main);
+    font-weight: 600;
     text-decoration: none;
   }
 
@@ -369,23 +388,24 @@
     text-decoration: underline;
   }
 
+  @media (max-width: 1024px) {
+    .auth-title {
+      font-size: 34px;
+    }
+  }
+
   @media (max-width: 640px) {
     .auth {
-      padding: 44px 16px 68px;
+      padding: 64px 16px 80px;
     }
 
     .auth-card {
       padding: 28px 22px 24px;
-      border-radius: 20px;
+      border-radius: 22px;
     }
 
     .auth-title {
-      font-size: 28px;
-    }
-
-    .auth-subtitle {
-      font-size: 11px;
-      letter-spacing: 0.18em;
+      font-size: 26px;
     }
   }
 </style>
