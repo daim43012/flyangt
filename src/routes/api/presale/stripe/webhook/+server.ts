@@ -68,6 +68,17 @@ export const POST = async ({ request }: RequestEvent) => {
         return json({ ok: true, already: true });
       }
 
+      // Check if presale_500 reward already exists (before the transaction)
+      const rewardExists = await prisma.rewardLedger.findUnique({
+        where: {
+          userId_taskKey: {
+            userId: purchase.userId,
+            taskKey: "presale_500",
+          },
+        },
+        select: { id: true },
+      });
+
       await prisma.$transaction(async (tx) => {
         await tx.presalePurchase.update({
           where: { id: purchase.id },
@@ -88,6 +99,47 @@ export const POST = async ({ request }: RequestEvent) => {
             totalTokenAmount: { increment: inc },
           },
         });
+
+        // Award presale_500 airdrop task if total Stripe purchases >= $500
+        if (!rewardExists) {
+          const agg = await tx.presalePurchase.aggregate({
+            where: { userId: purchase.userId, status: "paid" },
+            _sum: { payAmount: true },
+          });
+
+          if ((agg._sum.payAmount ?? 0) >= 500) {
+            const wallet = purchase.walletId
+              ? await tx.walletInfo.findUnique({
+                  where: { id: purchase.walletId },
+                  select: { address: true },
+                })
+              : null;
+
+            const addr = wallet?.address ?? "";
+
+            await tx.rewardLedger.create({
+              data: {
+                userId: purchase.userId,
+                walletAddress: addr,
+                taskKey: "presale_500",
+                taskTitle: "Presale purchase $500+",
+                amount: 500,
+              },
+            });
+
+            await tx.rewardTotal.upsert({
+              where: { userId: purchase.userId },
+              create: {
+                userId: purchase.userId,
+                walletAddress: addr,
+                totalAmount: 500,
+              },
+              update: {
+                totalAmount: { increment: 500 },
+              },
+            });
+          }
+        }
       });
 
       return json({ ok: true });
