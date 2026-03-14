@@ -1,16 +1,20 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
 
-  // MOCK DATA (без export, всё внутри)
-  const totalTokens = 5_000_000;
-  const soldTokensTarget = 2_850_000; // чуть больше половины
-  const whitepaperUrl = "/whitepaper"; // поменяй на реальную ссылку при необходимости
+  export let data: {
+    presaleTotal?: { totalTokenAmount: number };
+    offchainPurchases?: Array<{ amount: number; status: string }>;
+  } = {};
 
-  const targetPct = Math.round((soldTokensTarget / totalTokens) * 100);
+  const GOAL = 50_000_000;
+  const whitepaperUrl = "/whitepaper";
 
+  let dbTokens = 0;
+  let onchainTokens = 0;
   let shownSold = 0;
   let shownPct = 0;
+  let loading = true;
 
   let raf = 0;
 
@@ -18,50 +22,50 @@
     return 1 - Math.pow(1 - t, 3);
   }
 
-  function animateTo(opts: {
-    fromSold: number;
-    toSold: number;
-    fromPct: number;
-    toPct: number;
-    durationMs?: number;
-  }) {
+  function update() {
+    const total = dbTokens + onchainTokens;
+    const pct = Math.round((total / GOAL) * 100);
+
     if (!browser) return;
 
-    const { fromSold, toSold, fromPct, toPct, durationMs = 450 } = opts;
+    const fromSold = shownSold;
+    const fromPct = shownPct;
+    const durationMs = 520;
 
     if (raf) cancelAnimationFrame(raf);
-
     const start = performance.now();
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / durationMs);
       const e = easeOutCubic(t);
-
-      shownSold = Math.round(fromSold + (toSold - fromSold) * e);
-      shownPct = Math.round(fromPct + (toPct - fromPct) * e);
-
+      shownSold = Math.round(fromSold + (total - fromSold) * e);
+      shownPct = Math.round(fromPct + (pct - fromPct) * e);
       if (t < 1) raf = requestAnimationFrame(tick);
     };
 
     raf = requestAnimationFrame(tick);
   }
 
-  // SSR fallback
-  if (!browser) {
-    shownSold = soldTokensTarget;
-    shownPct = targetPct;
+  async function fetchDbProgress() {
+    try {
+      const res = await fetch("/api/presale/progress");
+      if (!res.ok) return;
+      const resp = await res.json();
+      dbTokens = resp.dbTokens ?? 0;
+      onchainTokens = resp.onchainTokens ?? 0;
+    } catch {
+      // silent
+    } finally {
+      loading = false;
+      update();
+    }
   }
 
-  // Animate on client
-  $: if (browser) {
-    animateTo({
-      fromSold: shownSold,
-      toSold: soldTokensTarget,
-      fromPct: shownPct,
-      toPct: targetPct,
-      durationMs: 520
-    });
-  }
+  onMount(() => {
+    dbTokens = data?.presaleTotal?.totalTokenAmount ?? 0;
+    update();
+    fetchDbProgress();
+  });
 
   $: safePct = Math.max(0, Math.min(100, shownPct));
 
@@ -87,7 +91,7 @@
 
     <div class="mid">
       <div class="k">Presale Progress</div>
-      <div class="meta">{fmt(shownSold)} / {fmt(totalTokens)} Tokens</div>
+      <div class="meta">{fmt(shownSold)} / {fmt(GOAL)} ANGT</div>
     </div>
 
     <div class="bar" aria-label="presale progress">
@@ -97,116 +101,143 @@
       />
     </div>
 
-    <a class="btn" href={whitepaperUrl} target="_blank" rel="noreferrer">
+    <a class="btn" href={whitepaperUrl}>
       Read Whitepaper
     </a>
   </section>
 </div>
 
 <style>
-  .card {
-    border-radius: 26px;
-    padding: 22px 22px 18px;
-    overflow: hidden;
-    position: relative;
+.dash {
+  width: 100%;
+}
 
-    background: linear-gradient(135deg, rgba(79, 70, 229, 1), rgba(147, 51, 234, 1));
-    box-shadow: 0 26px 70px rgba(79, 70, 229, 0.28);
+.card {
+  position: relative;
+  border-radius: 26px;
+  padding: 22px 22px 18px;
 
-    height: 100%;
-    min-height: 188px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-soft);
 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 12px;
-  }
+  box-shadow:
+    0 30px 90px rgba(18, 20, 22, 0.08),
+    0 8px 22px rgba(18, 20, 22, 0.06);
 
-  .card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(900px 360px at 20% 10%, rgba(255, 255, 255, 0.22), transparent 55%),
-      radial-gradient(800px 320px at 90% 40%, rgba(255, 255, 255, 0.14), transparent 60%);
-    pointer-events: none;
-  }
+  height: 100%;
+  min-height: 188px;
 
-  .top {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    align-items: start;
-  }
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-  .left {
-    display: grid;
-    gap: 8px;
-  }
+/* убрали glow */
+.card::before {
+  content: none;
+}
 
-  .k {
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(255, 255, 255, 0.78);
-  }
+/* TOP */
+.top {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
 
-  .v {
-    font-size: 46px;
-    font-weight: 950;
-    letter-spacing: -0.05em;
-    font-style: italic;
-    line-height: 1;
-    color: white;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-  }
+.left {
+  display: grid;
+  gap: 10px;
+}
 
-  .t {
-    font-size: 16px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(255, 255, 255, 0.72);
-    font-style: normal;
-  }
+.k {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 
-  .mid {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 6px;
-  }
+/* VALUE */
+.v {
+  font-family: var(--font-heading);
+  font-size: 46px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
 
-  .meta {
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
-  }
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
 
-  .bar {
-    position: relative;
-    height: 10px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.22);
-    overflow: hidden;
-  }
+  background: linear-gradient(
+    135deg,
+    var(--accent-light),
+    var(--accent),
+    var(--accent-dark)
+  );
 
-  .fill {
-    height: 100%;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.85);
-    box-shadow: 0 10px 22px rgba(255, 255, 255, 0.16);
-  }
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
 
-  /* Button like твоих pill-кнопок */
-  .btn {
-     height: 42px;
+.t {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* MID */
+.mid {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* BAR */
+.bar {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    135deg,
+    var(--accent-light),
+    var(--accent),
+    var(--accent-dark)
+  );
+
+  box-shadow:
+    0 12px 26px rgba(18, 20, 22, 0.10);
+}
+
+/* BTN */
+.btn {
+  height: 42px;
   width: 100%;
   border-radius: 999px;
 
@@ -215,43 +246,46 @@
   justify-content: center;
   gap: 8px;
 
-  font-size: 12px;
-  font-weight: 950;
-  letter-spacing: -0.02em;
+  font-size: 13px;
+  font-weight: 600;
 
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-soft);
+  background: rgba(15, 23, 42, 0.02);
+  color: var(--text-muted);
 
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 18px 60px rgba(18, 20, 22, 0.06),
+    0 6px 18px rgba(18, 20, 22, 0.04);
 
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
-  cursor: not-allowed;
+  cursor: pointer;
 
   transition:
-    filter 0.12s ease,
-    transform 0.12s ease;
+    transform 0.45s ease,
+    box-shadow 0.45s ease,
+    border-color 0.45s ease;
 }
-  
 
-  .btn:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.06);
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 26px 80px rgba(18, 20, 22, 0.10),
+    0 10px 28px rgba(18, 20, 22, 0.06);
+  border-color: rgba(176, 141, 87, 0.35);
+}
+
+@media (max-width: 980px) {
+  .card {
+    padding: 16px;
+    border-radius: 22px;
+    min-height: 0;
   }
 
-  .btn:active {
-    transform: translateY(0px);
+  .v {
+    font-size: 30px;
   }
 
-  @media (max-width: 980px) {
-    .card {
-      padding: 16px;
-      border-radius: 20px;
-      min-height: 0;
-    }
-    .v {
-      font-size: 30px;
-    }
+  .t {
+    font-size: 12px;
   }
+}
 </style>
