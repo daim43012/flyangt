@@ -33,15 +33,11 @@
     </p>
 
     <div class="hero-actions">
-      <button
-        class="btn btn-primary"
-        type="button"
-        on:click={() => (buyOpen = true)}
-      >
-        Buy ANGT
-      </button>
+  <a href="/app/presale" class="btn btn-primary">
+  Buy ANGT
+</a>
 
-      <a class="btn btn-ghost" href="/app/finance">Add Liquidity</a>
+      <a class="btn btn-ghost" href="/app/presale">Add Liquidity</a>
     </div>
   </div>
 </section>
@@ -55,12 +51,12 @@
 <style>
   .hero-card {
     position: relative;
-    border-radius: 28px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    border-radius: 20px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
     box-shadow:
-      0 30px 80px rgba(15, 23, 42, 0.1),
-      0 10px 25px rgba(15, 23, 42, 0.06);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     overflow: hidden;
     width: 100%;
   }
@@ -70,16 +66,14 @@
     inset: 0;
     background: radial-gradient(
         1200px 420px at 25% 20%,
-        rgba(37, 99, 235, 0.2),
+        rgba(176, 141, 87, 0.1),
         transparent 60%
       ),
       radial-gradient(
         1100px 420px at 80% 20%,
-        rgba(124, 58, 237, 0.18),
+        rgba(122, 90, 45, 0.07),
         transparent 62%
-      ),
-      linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.06));
-    filter: saturate(1.05);
+      );
     pointer-events: none;
   }
 
@@ -92,23 +86,23 @@
 
   .hero-kicker {
     font-size: 11px;
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: 0.12em;
-    color: rgba(15, 23, 42, 0.45);
+    color: var(--text-muted);
   }
 
   .hero-title {
     margin: 10px 0 0;
     font-size: 30px;
     line-height: 1.1;
-    font-weight: 950;
+    font-weight: 600;
+    font-family: var(--font-heading);
     letter-spacing: -0.03em;
-    color: #0f172a;
-    font-style: italic;
+    color: var(--text-main);
   }
 
   .accent {
-    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    background: linear-gradient(90deg, var(--accent), var(--accent-dark));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -118,7 +112,7 @@
     margin: 10px 0 0;
     font-size: 14px;
     line-height: 1.5;
-    color: rgba(15, 23, 42, 0.65);
+    color: var(--text-muted);
     max-width: 640px;
   }
 
@@ -129,15 +123,15 @@
     flex-wrap: wrap;
   }
 
-  /* ===== Buttons in your style ===== */
+  /* ===== Buttons ===== */
   .btn {
     height: 40px;
     padding: 0 18px;
     border-radius: 999px;
     font-size: 12px;
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: -0.01em;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    border: 1px solid var(--border-soft);
 
     display: inline-flex;
     align-items: center;
@@ -153,7 +147,6 @@
       filter 0.12s ease,
       background 0.12s ease,
       border-color 0.12s ease;
-    backdrop-filter: blur(10px);
   }
 
   .btn:active {
@@ -161,10 +154,10 @@
   }
 
   .btn-primary {
-    background: #0f172a;
+    background: var(--accent);
     color: #fff;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
-    border-color: rgba(15, 23, 42, 0.14);
+    box-shadow: 0 14px 34px rgba(176, 141, 87, 0.22);
+    border-color: rgba(176, 141, 87, 0.3);
   }
 
   .btn-primary:hover {
@@ -177,19 +170,19 @@
   }
 
   .btn-ghost {
-    background: rgba(255, 255, 255, 0.78);
-    color: #0f172a;
+    background: var(--bg-white);
+    color: var(--text-main);
   }
 
   .btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: rgba(15, 23, 42, 0.14);
+    background: rgba(176, 141, 87, 0.06);
+    border-color: rgba(176, 141, 87, 0.22);
     transform: translateY(-1px);
   }
 
   @media (max-width: 980px) {
     .hero-card {
-      border-radius: 22px;
+      border-radius: 20px;
     }
     .hero-content {
       padding: 18px;
