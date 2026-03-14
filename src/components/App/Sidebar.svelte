@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { openAdvisor } from "$lib/stores/advisor";
 
   type NavItem = {
     href: string;
@@ -58,28 +59,23 @@
           iconClass:
             "fa-solid fa-parachute-box w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
         },
-        {
-          href: "/app/staking",
-          label: "Staking",
-          iconClass:
-            "fa-solid fa-coins w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
-        },
+        // {
+        //   href: "/app/staking",
+        //   label: "Staking",
+        //   iconClass:
+        //     "fa-solid fa-coins w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+        // },
         {
           href: "/app/rewards",
           label: "Rewards",
           iconClass:
             "fa-solid fa-gift w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
         },
-      ],
-    },
-    {
-      title: "Tools",
-      items: [
         {
-          href: "/app/advisor",
-          label: "Flight Advisor",
+          href: "/app/referral",
+          label: "Referral",
           iconClass:
-            "fa-solid fa-compass w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
+            "fa-solid fa-user-group w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue",
         },
       ],
     },
@@ -129,6 +125,18 @@
         </div>
       </div>
     {/each}
+
+    <div class="nav-section">
+      <div class="nav-section-title">Tools</div>
+      <div class="nav-section-items">
+        <button class="nav-item group" type="button" on:click={openAdvisor}>
+          <span class="nav-ic" aria-hidden="true">
+            <i class="fa-solid fa-compass w-6 text-center text-lg text-slate-400 group-hover:text-fly-blue"></i>
+          </span>
+          <span class="nav-label">Flight Advisor</span>
+        </button>
+      </div>
+    </div>
   </nav>
 
   <div class="sidebar-footer">
@@ -171,20 +179,14 @@
 </div>
 
 <style>
-  /* ================================
-   FlyANG Sidebar: full styles
-   (soft premium glass + mild active)
-================================ */
-
   .sidebar-card {
     height: 100%;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 20px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.1),
-      0 6px 18px rgba(15, 23, 42, 0.08);
-    backdrop-filter: blur(14px);
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -193,25 +195,26 @@
   /* Brand */
   .brand {
     padding: 18px 16px 12px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    border-bottom: 1px solid var(--border-soft);
   }
 
   .brand-mark {
     font-size: 18px;
-    font-weight: 900;
+    font-weight: 600;
+    font-family: var(--font-heading);
     text-transform: uppercase;
-    font-style: italic;
     letter-spacing: -0.03em;
-    color: #0f172a;
+    color: var(--text-main);
     line-height: 1;
   }
 
   .brand-sub {
     margin-top: 6px;
     font-size: 10px;
+    font-weight: 600;
     letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   /* Nav */
@@ -233,58 +236,42 @@
   .nav-section-title {
     padding: 6px 10px 2px;
     font-size: 10px;
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
 
   .nav-section-items {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
 
   .nav-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 12px;
+    padding: 10px 12px;
     border-radius: 14px;
-    font-style: italic;
-    letter-spacing: -0.03em;
-    color: #0f172a;
+    color: var(--text-main);
     text-decoration: none;
     border: 1px solid transparent;
     transition:
-      background 0.28s ease,
-      box-shadow 0.28s ease,
-      transform 0.28s ease,
-      border-color 0.28s ease;
+      background 0.16s ease,
+      border-color 0.16s ease,
+      transform 0.16s ease;
   }
 
   .nav-item:hover {
-    background: rgba(15, 23, 42, 0.035);
-    border-color: rgba(15, 23, 42, 0.06);
+    background: rgba(176, 141, 87, 0.05);
+    border-color: rgba(176, 141, 87, 0.14);
   }
 
   .nav-item.is-active {
-    background: radial-gradient(
-        1200px 420px at 25% 20%,
-        rgba(37, 99, 235, 0.2),
-        transparent 60%
-      ),
-      radial-gradient(
-        1100px 420px at 80% 20%,
-        rgba(124, 58, 237, 0.18),
-        transparent 62%
-      ),
-      linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.06));
-    color: #0f172a;
-    box-shadow:
-      inset 0 0 0 1px rgba(15, 23, 42, 0.08),
-      0 10px 30px rgba(15, 23, 42, 0.1);
-    border-color: rgba(15, 23, 42, 0.06);
+    background: rgba(176, 141, 87, 0.08);
+    border-color: rgba(176, 141, 87, 0.22);
+    box-shadow: 0 10px 30px rgba(176, 141, 87, 0.08);
   }
 
   /* Icon container */
@@ -294,58 +281,54 @@
     border-radius: 12px;
     display: grid;
     place-items: center;
-    background: rgba(15, 23, 42, 0.05);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
     transition:
-      background 0.28s ease,
-      border-color 0.28s ease,
-      box-shadow 0.28s ease;
+      background 0.16s ease,
+      border-color 0.16s ease;
+    flex: 0 0 auto;
   }
 
   .nav-ic :global(i) {
-    color: #6e7e96; /* slate-600 */
-    font-size: 16px;
+    color: var(--text-muted);
+    font-size: 15px;
     font-weight: 600;
-    transition:
-      color 0.25s ease,
-      transform 0.25s ease;
+    transition: color 0.16s ease, transform 0.16s ease;
   }
 
   .nav-item:hover .nav-ic :global(i) {
-    color: #2563eb;
+    color: var(--accent);
     transform: translateY(-1px);
   }
 
   .nav-item.is-active .nav-ic {
-    background: rgba(255, 255, 255, 0.75);
-    border-color: rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 8px 20px rgba(15, 23, 42, 0.1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    background: rgba(176, 141, 87, 0.08);
+    border-color: rgba(176, 141, 87, 0.22);
   }
 
   .nav-item.is-active .nav-ic :global(i) {
-    color: #1e40af;
-    transform: none;
+    color: var(--accent-dark);
   }
 
   .nav-label {
     font-size: 14px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #000000;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
   }
 
+  /* Footer */
   .sidebar-footer {
-    padding: 12px 12px;
-    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 12px;
+    border-top: 1px solid var(--border-soft);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
   }
 
-  .user {
+  .user,
+  .login-cta {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -357,11 +340,20 @@
     width: 34px;
     height: 34px;
     border-radius: 12px;
-    background: rgba(15, 23, 42, 0.08);
+    background: rgba(176, 141, 87, 0.08);
+    border: 1px solid rgba(176, 141, 87, 0.22);
     display: grid;
     place-items: center;
-    font-weight: 900;
-    color: #0f172a;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--accent-dark);
+    flex: 0 0 auto;
+  }
+
+  .avatar.muted {
+    background: var(--bg-white);
+    border-color: var(--border-soft);
+    color: var(--text-muted);
   }
 
   .user-meta {
@@ -370,8 +362,8 @@
 
   .user-name {
     font-size: 12px;
-    font-weight: 800;
-    color: #0f172a;
+    font-weight: 600;
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -380,28 +372,36 @@
   .user-role {
     margin-top: 2px;
     font-size: 10px;
+    font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .footer-actions {
     display: flex;
     gap: 8px;
+    flex: 0 0 auto;
   }
 
   .mini-btn {
     width: 34px;
     height: 34px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 18px 60px rgba(18, 20, 22, 0.06),
+      0 6px 18px rgba(18, 20, 22, 0.04);
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.16s ease, border-color 0.16s ease;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
   }
 
   .mini-btn:hover {
     transform: translateY(-2px);
+    border-color: rgba(176, 141, 87, 0.22);
   }
 </style>
