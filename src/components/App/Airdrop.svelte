@@ -8,11 +8,11 @@
 <section class="airdrop">
   <div class="main-col">
     <div class="top">
-      <AirdropTimer />
-      <AirdropEarned {data} />
+      <div data-tour-page="airdrop-timer"><AirdropTimer /></div>
+      <div data-tour-page="airdrop-earned"><AirdropEarned {data} /></div>
     </div>
 
-    <AirdropTasks {data}/>
+    <div data-tour-page="airdrop-tasks"><AirdropTasks {data}/></div>
   </div>
 </section>
 
