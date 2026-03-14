@@ -4,6 +4,9 @@
   import WalletProviderPicker from "./WalletProviderPicker.svelte";
   import { get } from "svelte/store";
   import { invalidateAll } from "$app/navigation";
+  import { cleanupModal } from "$lib/wallet/walletconnect";
+  import { isPolygon } from "$lib/wallet/chains";
+  import { clog } from "$lib/utils/clientLog";
 
   let open = false;
   let copied = false;
@@ -36,9 +39,6 @@
     } catch {}
   }
 
-  function isPolygon(cid: string | null) {
-    return (cid ?? "").toLowerCase() === "0x89";
-  }
 
   async function completeWalletTaskViaServer() {
     taskError = "";
@@ -48,6 +48,8 @@
       const s = get(wallet);
       if (!s.address || !s.provider) throw new Error("Wallet not connected");
       if (s.status === "wrong_network") throw new Error("Wrong network.");
+
+      clog.info("wallet:task", "start", { addr: s.address, provider: s.providerId ?? "?" });
 
       const stRes = await fetch("/api/airdrop/wallet/status", {
         method: "POST",
@@ -59,16 +61,19 @@
 
       if (!stRes.ok) {
         if (stJson?.error === "wallet_mismatch") {
-          throw new Error(`Wallet mismatch. Registered: ${stJson.registered}`);
+          const r = stJson.registered;
+          throw new Error(`Your account is linked to wallet ${r.slice(0, 6)}…${r.slice(-4)}. Please switch to it in your wallet app.`);
         }
         throw new Error(stJson?.error || "Status error");
       }
 
       if (stJson?.needsSignature === false) {
+        clog.info("wallet:task", "no signature needed, done");
         await invalidateAll();
         return;
       }
 
+      clog.info("wallet:task", "requesting nonce");
       const nonceRes = await fetch("/api/airdrop/wallet/nonce", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,19 +86,20 @@
       const nonceJson = await nonceRes.json();
       if (!nonceRes.ok) {
         if (nonceJson?.error === "wallet_mismatch") {
-          throw new Error(
-            `Wallet mismatch. Registered: ${nonceJson.registered}`,
-          );
+          const r = nonceJson.registered;
+          throw new Error(`Your account is linked to wallet ${r.slice(0, 6)}…${r.slice(-4)}. Please switch to it in your wallet app.`);
         }
         throw new Error(nonceJson?.error || "Nonce error");
       }
 
       const { message } = nonceJson;
 
+      clog.info("wallet:task", "calling personal_sign");
       const signature = await s.provider.request({
         method: "personal_sign",
         params: [message, s.address],
       });
+      clog.info("wallet:task", "personal_sign done");
 
       const verifyRes = await fetch("/api/airdrop/wallet/verify", {
         method: "POST",
@@ -108,16 +114,18 @@
       const verifyJson = await verifyRes.json();
       if (!verifyRes.ok) {
         if (verifyJson?.error === "wallet_mismatch") {
-          throw new Error(
-            `Wallet mismatch. Registered: ${verifyJson.registered}`,
-          );
+          const r = verifyJson.registered;
+          throw new Error(`Your account is linked to wallet ${r.slice(0, 6)}…${r.slice(-4)}. Please switch to it in your wallet app.`);
         }
         throw new Error(verifyJson?.error || "Verify error");
       }
 
+      clog.info("wallet:task", "verify ok, invalidating");
       await invalidateAll();
     } catch (e: any) {
-      taskError = String(e?.message ?? e ?? "Error");
+      const msg = String(e?.message ?? e ?? "Error");
+      clog.error("wallet:task", "error", { err: e?.message, code: e?.code });
+      taskError = msg;
     } finally {
       taskBusy = false;
     }
@@ -127,12 +135,21 @@
     taskError = "";
     close();
 
+    clog.info("wallet:connect", "button clicked");
     await wallet.connect();
 
     const s = get(wallet);
+    clog.info("wallet:connect", "after connect", { status: s.status, addr: s.address ?? "null", provider: s.providerId ?? "?" });
     if (s.status === "connected" && s.address) {
       await completeWalletTaskViaServer();
     }
+
+    // Ensure AppKit modal and any injected body styles are fully cleaned up
+    // after the entire connect + sign flow completes on mobile.
+    cleanupModal();
+    // Delayed safety net: modal elements may be re-injected asynchronously
+    setTimeout(cleanupModal, 500);
+    setTimeout(cleanupModal, 2000);
   }
 
   function disconnectClick() {
@@ -282,8 +299,6 @@
         </a>
       </div>
     {/if}
-
-    <!-- ✅ IDLE / ERROR -->
   {:else}
     <button
       class="wp-pill"
@@ -302,8 +317,6 @@
           <div class="wp-title">Choose wallet</div>
           <div class="wp-sub">Select provider, then connect</div>
         </div>
-
-        <!-- ✅ выбор показываем когда НЕ connected -->
         <WalletProviderPicker />
 
         <div class="wp-sep"></div>
@@ -316,7 +329,7 @@
     {/if}
   {/if}
 
-  {#if status === "error" && $wallet.lastError}
+  {#if (status === "error" || status === "wrong_network") && $wallet.lastError}
     <div class="wp-hint">{$wallet.lastError}</div>
   {/if}
 
@@ -334,66 +347,75 @@
     align-items: center;
   }
 
-  /* pill = максимально простой */
+  /* ── Pill trigger ── */
   .wp-pill {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 34px;
-    padding: 0 12px;
+    height: 38px;
+    padding: 0 16px;
     border-radius: 999px;
 
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: rgba(255, 255, 255, 0.75);
-    color: #0f172a;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    color: var(--text-main);
 
-    box-shadow: none;
+    box-shadow:
+      0 8px 22px rgba(18, 20, 22, 0.06),
+      0 2px 6px rgba(18, 20, 22, 0.04);
     cursor: pointer;
     user-select: none;
     transition:
-      background 0.12s ease,
-      border-color 0.12s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+      transform 0.35s ease,
+      box-shadow 0.35s ease,
+      border-color 0.35s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .wp-pill:hover {
-    background: rgba(255, 255, 255, 0.92);
-    border-color: rgba(15, 23, 42, 0.18);
+    transform: translateY(-2px);
+    box-shadow:
+      0 14px 36px rgba(18, 20, 22, 0.09),
+      0 4px 12px rgba(18, 20, 22, 0.05);
+    border-color: rgba(176, 141, 87, 0.35);
   }
 
   .wp-pill:active {
-    background: rgba(255, 255, 255, 0.86);
+    transform: translateY(0);
   }
 
   .wp-pill--disabled {
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.6;
   }
 
   .wp-pill--warn {
     border-color: rgba(245, 158, 11, 0.35);
   }
 
-  /* точка без свечения */
+  /* ── Status dot ── */
   .wp-dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
     background: #22c55e;
-    box-shadow: none;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
   }
 
   .wp-dot--off {
-    background: rgba(15, 23, 42, 0.35);
+    background: var(--text-muted);
+    box-shadow: none;
+    opacity: 0.5;
   }
 
   .wp-dot--warn {
     background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
   }
 
   .wp-addr {
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.01em;
     font-size: 13px;
     line-height: 1;
@@ -401,16 +423,17 @@
   }
 
   .wp-chev {
-    font-size: 12px;
-    opacity: 0.55;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.6;
   }
 
   .wp-spinner {
     width: 14px;
     height: 14px;
     border-radius: 999px;
-    border: 2px solid rgba(15, 23, 42, 0.18);
-    border-top-color: rgba(15, 23, 42, 0.55);
+    border: 2px solid rgba(176, 141, 87, 0.2);
+    border-top-color: var(--accent);
     animation: spin 0.8s linear infinite;
   }
 
@@ -420,27 +443,29 @@
     }
   }
 
-  /* Dropdown menu = проще */
+  /* ── Dropdown menu ── */
   .wp-menu {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 10px);
     right: 0;
-    width: 260px;
-    padding: 8px;
-    border-radius: 14px;
+    width: 280px;
+    padding: 10px;
+    border-radius: 20px;
 
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: rgba(255, 255, 255, 0.96);
-    color: #0f172a;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+    color: var(--text-main);
 
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.1),
+      0 8px 22px rgba(18, 20, 22, 0.07);
     z-index: 999999;
-    animation: pop 0.12s ease-out;
+    animation: pop 0.2s ease-out;
   }
 
   @keyframes pop {
     from {
-      transform: translateY(-4px);
+      transform: translateY(-6px);
       opacity: 0;
     }
     to {
@@ -450,24 +475,25 @@
   }
 
   .wp-row--top {
-    padding: 8px 10px 6px;
+    padding: 10px 12px 8px;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
   }
 
   .wp-title {
-    font-weight: 800;
-    font-size: 12px;
-    letter-spacing: 0.12em;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    opacity: 0.8;
+    color: var(--text-muted);
   }
 
   .wp-sub {
-    font-size: 12px;
-    font-weight: 700;
-    opacity: 0.65;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.7;
   }
 
   .wp-item {
@@ -475,41 +501,54 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 10px;
-    border-radius: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
 
     border: 1px solid transparent;
     background: transparent;
-    color: inherit;
+    color: var(--text-main);
     text-decoration: none;
     cursor: pointer;
 
-    font-weight: 650;
+    font-weight: 600;
     font-size: 13px;
     transition:
-      background 0.12s ease,
-      border-color 0.12s ease;
+      background 0.25s ease,
+      border-color 0.25s ease,
+      transform 0.25s ease;
   }
 
   .wp-item:hover {
-    background: rgba(15, 23, 42, 0.04);
-    border-color: rgba(15, 23, 42, 0.06);
+    background: rgba(176, 141, 87, 0.05);
+    border-color: rgba(176, 141, 87, 0.12);
+    transform: translateX(2px);
   }
 
   .wp-item--danger {
     color: #ef4444;
   }
 
+  .wp-item--danger:hover {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.12);
+  }
+
   .wp-ico {
-    width: 18px;
+    width: 20px;
     text-align: center;
-    opacity: 0.7;
+    font-size: 14px;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .wp-item--danger .wp-ico {
+    color: #ef4444;
   }
 
   .wp-sep {
     height: 1px;
-    margin: 6px 8px;
-    background: rgba(15, 23, 42, 0.08);
+    margin: 6px 10px;
+    background: var(--border-soft);
   }
 
   .wp-hint {
@@ -517,14 +556,17 @@
     top: calc(100% + 10px);
     left: 0;
     max-width: 360px;
-    padding: 10px 12px;
-    border-radius: 12px;
+    padding: 10px 14px;
+    border-radius: 14px;
 
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    background: var(--bg-white);
+    box-shadow:
+      0 12px 36px rgba(18, 20, 22, 0.08),
+      0 4px 12px rgba(18, 20, 22, 0.05);
     font-size: 12px;
-    opacity: 0.95;
+    font-weight: 500;
+    color: var(--text-muted);
     z-index: 70;
   }
 </style>
