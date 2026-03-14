@@ -9,8 +9,6 @@
   import Why from "./index/Why.svelte";
   import PlanePath from "./PlanePath.svelte";
   import FlightRoutesMap from "./publicPages/FlightRoutesMap.svelte";
-  import Team from "./publicPages/Team.svelte";
-
   export let data: any;
 </script>
 
@@ -18,11 +16,10 @@
 <!-- <Plane /> -->
 <Why/>
 <CyprusHub/>
+<PathSelector />
 <PerformanceComparisonSection/>
 <FlightRoutesMap/>
-<PathSelector />
 <PlanePath />
-<Team/>
 <HomePosts {data} />
 
 <!-- <TestBlender /> -->
