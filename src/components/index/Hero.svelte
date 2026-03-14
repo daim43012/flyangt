@@ -1,4 +1,21 @@
-<section class="hero" id="ecosystem">
+<script>
+  import { onMount } from "svelte";
+  import { browser } from "$app/environment";
+
+  let loaded = false;
+
+  onMount(() => {
+    const img = new Image();
+    img.src = "/images/main.webp";
+    if (img.complete) {
+      loaded = true;
+    } else {
+      img.onload = () => (loaded = true);
+    }
+  });
+</script>
+
+<section class="hero" class:hero-loaded={loaded} id="ecosystem">
   <div class="hero-wrap">
     <div class="hero-badge">
       <span class="hero-dot"></span>
@@ -9,19 +26,21 @@
 
     <p class="hero-subtitle">
       FlyANGT is a unified ecosystem that combines aircraft ownership, shared
-      access, digital management, and tokenized participation — built for the
+      access, digital management, and tokenized participation built for the
       European aviation market.
     </p>
 
-    <div class="hero-trust">
-      Built with certified aircraft platforms, operational infrastructure, and a
-      professional team of aviation engineers, flight consultants, and industry
-      partners.
-    </div>
+    <!-- <div class="hero-trust">
+      Built with certified aircraft platforms, operational infrastructure,
+      and a professional team of aviation engineers, flight consultants,
+      and industry partners.
+    </div> -->
 
     <div class="hero-actions">
-      <a class="btn btn-primary" href="#ecosystem">Explore the Ecosystem</a>
-      <a class="btn btn-secondary" href="#paths">Choose Your Path</a>
+      <a class="btn btn-primary" href="/app/dashboard">
+        Explore the Ecosystem
+      </a>
+      <a class="btn btn-secondary" href="#paths"> Choose Your Path </a>
     </div>
 
     <div class="hero-micro">
@@ -33,166 +52,161 @@
 <style>
   .hero {
     position: relative;
-    padding: 92px 16px 46px;
+    min-height: 92vh;
+    padding: 120px 16px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
+
+    /* Tiny inline placeholder — instant render */
+    background-image: url("data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAwBACdASogABEAPzmIuFOvKSUwsAgCECcJZQC/avIDTdsE7awQY8uYSfAA4XZVraXj58JiDErZC1REf7n91pzOhzcd/odFZDYXP5bHdL0NAAAA");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
+  /* Cinematic overlay */
   .hero::before {
     content: "";
     position: absolute;
     inset: 0;
     background: radial-gradient(
-        900px 460px at 50% -140px,
-        rgba(59, 130, 246, 0.1),
-        transparent 62%
-      ),
-      radial-gradient(
-        700px 420px at 18% -120px,
-        rgba(15, 23, 42, 0.06),
+        900px 600px at 78% 32%,
+        rgba(176, 141, 87, 0.35),
         transparent 60%
       ),
       radial-gradient(
-        700px 420px at 82% -120px,
-        rgba(15, 23, 42, 0.06),
-        transparent 60%
+        700px 500px at 70% 20%,
+        rgba(255, 255, 255, 0.18),
+        transparent 55%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(18, 20, 22, 0.72) 0%,
+        rgba(18, 20, 22, 0.48) 40%,
+        rgba(18, 20, 22, 0.22) 70%,
+        rgba(18, 20, 22, 0.1) 100%
       );
-    pointer-events: none;
-  }
-
-  .hero::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 64px;
-    width: min(980px, 92vw);
-    height: 1px;
-    transform: translateX(-50%);
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(15, 23, 42, 0.08),
-      transparent
-    );
     pointer-events: none;
   }
 
   .hero-wrap {
     position: relative;
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
     text-align: center;
+    z-index: 2;
   }
 
   .hero-badge {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px;
+    padding: 10px 18px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+
     font-size: 11px;
     letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: #64748b;
-    margin-bottom: 18px;
+    color: #ffffff;
+
+    margin-bottom: 24px;
   }
 
   .hero-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 999px;
-    background: rgba(59, 130, 246, 0.95);
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.14);
+    background: var(--accent);
+    box-shadow: 0 0 0 6px rgba(176, 141, 87, 0.25);
   }
 
   .hero-title {
-    margin: 0;
-    font-size: 58px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
-    color: #0f172a;
-    line-height: 1.03;
+    font-size: 64px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: #ffffff;
   }
 
   .hero-subtitle {
-    max-width: 880px;
-    margin: 18px auto 0;
-    font-size: 16px;
-    line-height: 1.7;
-    color: #64748b;
+    max-width: 820px;
+    margin: 40px auto 0;
+    font-size: 17px;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.88);
   }
 
   .hero-trust {
-    max-width: 920px;
-    margin: 18px auto 0;
-    padding: 12px 18px;
+    max-width: 880px;
+    margin: 44px auto 0;
+    padding: 14px 20px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.03);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    color: #475569;
+
+    backdrop-filter: blur(14px);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+
     font-size: 13px;
     line-height: 1.6;
-    box-shadow:
-      0 18px 60px rgba(15, 23, 42, 0.06),
-      0 6px 18px rgba(15, 23, 42, 0.04);
+    color: rgba(255, 255, 255, 0.85);
+
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
   }
 
   .hero-actions {
-    margin-top: 26px;
+    margin-top: 160px;
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 14px;
+    gap: 16px;
     flex-wrap: wrap;
   }
 
   .hero-micro {
-    margin-top: 14px;
+    margin-top: 24px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.65);
   }
 
   @media (max-width: 1024px) {
-    .hero {
-      padding: 76px 16px 40px;
-    }
-
     .hero-title {
-      font-size: 44px;
+      font-size: 46px;
     }
+  }
+
+  /* Full image after load */
+  .hero-loaded {
+    background-image: url("/images/main.webp");
+    transition: background-image 0s;
   }
 
   @media (max-width: 640px) {
     .hero {
-      padding: 58px 16px 34px;
-    }
-
-    .hero-badge {
-      padding: 9px 14px;
-      letter-spacing: 0.18em;
+      padding: 90px 16px 60px;
+      min-height: 80vh;
     }
 
     .hero-title {
-      font-size: 28px;
-      letter-spacing: -0.02em;
+      font-size: 30px;
     }
-
     .hero-subtitle {
-      font-size: 14px;
+      font-size: 15px;
     }
 
     .hero-trust {
       border-radius: 18px;
-      padding: 12px 14px;
+      padding: 14px;
     }
 
-    .hero-actions {
-      gap: 10px;
+    .hero-loaded {
+      background-image: url("/images/main-mobile.webp");
     }
   }
 </style>
