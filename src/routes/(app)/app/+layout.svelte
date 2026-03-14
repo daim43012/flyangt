@@ -1,12 +1,62 @@
-<script>
+<script lang="ts">
   import AppHeader from "../../../components/App/AppHeader.svelte";
   import Sidebar from "../../../components/App/Sidebar.svelte";
   import { onMount } from "svelte";
+  import { afterNavigate } from "$app/navigation";
   import { wallet } from "$lib/wallet/wallet.store";
   import FlyingPlanes from "../../../components/FlyingPlanes.svelte";
+  import { clog } from "$lib/utils/clientLog";
+  import AdvisorPopup from "../../../components/App/advisor/AdvisorPopup.svelte";
+  import PageTourOverlay from "../../../components/App/onboarding/PageTourOverlay.svelte";
+  import TourHelpButton from "../../../components/App/onboarding/TourHelpButton.svelte";
+  import { findTourForRoute, isPageTourDone, startPageTour } from "$lib/stores/pageTour";
+
+  afterNavigate(({ to }) => {
+    const toggle = document.getElementById("app-nav") as HTMLInputElement | null;
+    if (toggle) toggle.checked = false;
+
+    // Auto-start page tour on first visit
+    const pathname = to?.url?.pathname ?? "";
+    const tour = findTourForRoute(pathname);
+    if (tour && !isPageTourDone(tour.pageId)) {
+      setTimeout(() => startPageTour(tour.pageId), 600);
+    }
+  });
 
   onMount(() => {
     wallet.init();
+
+    // iOS bfcache guard: reload on restore so animations/timers aren't frozen
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        clog.warn("app", "pageshow persisted=true → reload");
+        window.location.reload();
+      }
+    };
+
+    // Global JS error catcher → pm2 logs
+    const onError = (e: ErrorEvent) => {
+      clog.error("app:uncaught", e.message, {
+        file: e.filename, line: e.lineno, col: e.colno,
+        stack: e.error?.stack?.slice(0, 500),
+      });
+    };
+    const onUnhandled = (e: PromiseRejectionEvent) => {
+      const r = e.reason;
+      clog.error("app:unhandled-rejection", String(r?.message ?? r), {
+        stack: r?.stack?.slice(0, 500),
+      });
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onUnhandled);
+
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onUnhandled);
+    };
   });
 </script>
 
@@ -53,6 +103,10 @@
   <label class="nav-fab" for="app-nav" aria-label="Open menu">
     <span class="nav-fab-lines"></span>
   </label>
+
+  <AdvisorPopup />
+  <TourHelpButton />
+  <PageTourOverlay />
 </div>
 
 <style>
