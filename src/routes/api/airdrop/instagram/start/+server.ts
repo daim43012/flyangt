@@ -5,7 +5,7 @@ import { signTaskToken } from "$lib/server/taskToken";
 
 const IG_URL = "https://www.instagram.com/crown_aero_group/";
 const TASK_KEY = "social_ig";
-const AMOUNT = 20;
+const AMOUNT = 75;
 
 export const POST = async ({ cookies }: RequestEvent) => {
 
