@@ -1,5 +1,6 @@
 import { browser } from "$app/environment";
 import { POLYGON } from "./chains";
+import { wcEip1193, WC_ICON, isMobileDevice, isWcAvailable } from "./walletconnect";
 
 export type Eip1193Provider = {
   request: (args: { method: string; params?: any[] | object }) => Promise<any>;
@@ -137,6 +138,16 @@ export function getAllProviders(): NamedProvider[] {
     merged.push(p);
   }
 
+  // Add WalletConnect when PROJECT_ID is configured
+  if (browser && isWcAvailable()) {
+    merged.push({
+      id: "walletconnect",
+      name: "WalletConnect",
+      icon: WC_ICON,
+      provider: wcEip1193,
+    });
+  }
+
   return merged;
 }
 
@@ -150,7 +161,14 @@ export function getPreferredProvider(): NamedProvider | null {
     if (match) return match;
   }
 
-  // приоритет (можно менять)
+  // На мобильном без инжектед-провайдера (нет MetaMask extension) — авто-выбрать WC
+  const hasInjected = providers.some((p) => p.id !== "walletconnect");
+  if (!hasInjected || (isMobileDevice() && !(window as any).ethereum)) {
+    const wc = providers.find((p) => p.id === "walletconnect");
+    if (wc) return wc;
+  }
+
+  // приоритет для десктопа
   const priority = ["rabby", "metamask", "coinbase", "brave", "okx", "phantom", "injected"];
 
   for (const id of priority) {
@@ -158,7 +176,6 @@ export function getPreferredProvider(): NamedProvider | null {
     if (match) return match;
   }
 
-  // если есть eip6963 и ничего не совпало — просто первый
   return providers[0];
 }
 
@@ -168,8 +185,15 @@ export function savePreferredProvider(id: string) {
 }
 
 export async function ensurePolygon(provider: Eip1193Provider) {
-  const chainId = await provider.request({ method: "eth_chainId" });
-  if (String(chainId).toLowerCase() === POLYGON.chainIdHex) return;
+  let chainId: string | null = null;
+
+  try {
+    chainId = await provider.request({ method: "eth_chainId" });
+  } catch {
+    // RPC may be down — still try to switch
+  }
+
+  if (chainId && String(chainId).toLowerCase() === POLYGON.chainIdHex) return;
 
   try {
     await provider.request({
