@@ -34,7 +34,7 @@
       name: "Liia Khatkova",
       role: "Head of Communications",
       bio: "Brand, content, and community growth across the ecosystem.",
-      photo: "/images/team/Khatkova.jpg",
+      photo: "/images/team/Liya.png",
       focus: "50% 18%"
     },
     {
@@ -45,7 +45,7 @@
       focus: "50% 18%"
     },
     {
-      name: "Oleksiy",
+      name: "Oleksiy Shevchenko",
       role: "Chief Delivery Officer, Head of PMO",
       bio: "Delivery management, planning, execution control, and PMO processes.",
       photo: "/images/team/Oleksiy.png",
@@ -55,199 +55,223 @@
 </script>
 
 <section class="team" id="team">
-  <div class="team-head">
-    <h2 class="team-title">TEAM</h2>
-    <p class="team-subtitle">The people building the ANGT ecosystem.</p>
+  <div class="team-header">
+    <h2 class="team-title">The team behind FlyANG</h2>
+    <p class="team-subtitle">Aviation, production, and platform execution</p>
+    <p class="team-lead">
+      Specialists across operations, engineering, delivery, and ecosystem design.
+      Clear roles, accountable ownership, and long term execution.
+    </p>
   </div>
 
-  <div class="grid">
+  <div class="team-grid">
     {#each team as m (m.name)}
-      <article class="card">
-        <div class="photo-wrap">
-          <!--
-            Важно для чёткости:
-            1) не растягиваем маленькие изображения
-            2) просим браузер брать 2x, если есть
-            3) задаём aspect-ratio и фиксируем кадрирование через object-position
-          -->
+      <article class="team-card">
+        <div class="team-photoWrap">
           <img
-            class="photo"
+            class="team-photo"
             src={m.photo}
             srcset={`${m.photo} 1x, ${m.photo} 2x`}
-            sizes="(max-width: 560px) 92vw, (max-width: 900px) 45vw, 320px"
+            sizes="(max-width: 560px) 92vw, (max-width: 980px) 45vw, 360px"
             alt={m.name}
             loading="lazy"
             decoding="async"
             style={`object-position: ${m.focus ?? "50% 18%"};`}
           />
-          <div class="photo-shade" aria-hidden="true"></div>
+          <div class="team-photoShade" aria-hidden="true"></div>
         </div>
 
-        <div class="body">
-          <div class="name" title={m.name}>{m.name}</div>
-          <div class="role">{m.role}</div>
-          <div class="bio">{m.bio}</div>
+        <div class="team-body">
+          <div class="team-name" title={m.name}>{m.name}</div>
+          <div class="team-role">{m.role}</div>
+          <div class="team-bio">{m.bio}</div>
         </div>
       </article>
     {/each}
   </div>
 </section>
-<style>
-.team {
-  padding: 72px 16px 72px;
-  max-width: 1200px;
-  margin: 0 auto;
-  color: #0f172a;
-}
 
-  .team-head {
+<style>
+  .team {
+    padding: 120px 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .team-header {
     text-align: center;
-    margin-bottom: 36px;
+    margin-bottom: 70px;
   }
 
   .team-title {
-    font-size: 34px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    letter-spacing: -0.04em;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     margin: 0;
-    color: #0f172a;
   }
 
   .team-subtitle {
-    margin-top: 10px;
+    margin-top: 16px;
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-muted);
+  }
+
+  .team-lead {
+    margin: 28px auto 0;
+    max-width: 70ch;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text-muted);
   }
 
   /* GRID */
-.grid {
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
+  .team-grid {
+    margin-top: 60px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+  }
 
   /* CARD */
-  .card {
+  .team-card {
     border-radius: 28px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.05);
-    box-shadow:
-      0 20px 70px rgba(15, 23, 42, 0.08),
-      0 8px 22px rgba(15, 23, 42, 0.05);
     overflow: hidden;
-    transition: transform 180ms ease, box-shadow 180ms ease;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18,20,22,0.08),
+      0 8px 22px rgba(18,20,22,0.06);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
     display: flex;
     flex-direction: column;
   }
 
-  .card:hover {
+  .team-card:hover {
     transform: translateY(-4px);
     box-shadow:
-      0 28px 90px rgba(15, 23, 42, 0.10),
-      0 12px 28px rgba(15, 23, 42, 0.07);
+      0 40px 110px rgba(18,20,22,0.10),
+      0 10px 28px rgba(18,20,22,0.08);
   }
 
-  /* PHOTO — ДЕЛАЕМ ДОМИНИРУЮЩИМ */
-  .photo-wrap {
+  /* PHOTO */
+  .team-photoWrap {
     position: relative;
-    aspect-ratio: 4 / 5;        /* Вертикальный, более “executive” формат */
-    min-height: 340px;          /* Выше чем было */
+    aspect-ratio: 4 / 3;
+    min-height: 200px;
     overflow: hidden;
     background: rgba(15, 23, 42, 0.03);
   }
 
-  .photo {
+  .team-photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 20%;   /* Лица чуть выше центра */
     display: block;
-
     transform: translateZ(0);
     backface-visibility: hidden;
   }
 
-  /* Лёгкий авиационный градиент */
-  .photo-shade {
+  .team-photoShade {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(120% 80% at 20% 0%, rgba(56, 189, 248, 0.18), transparent 55%),
+      radial-gradient(120% 80% at 20% 0%, rgba(37, 99, 235, 0.18), transparent 55%),
       linear-gradient(to top, rgba(15, 23, 42, 0.18), transparent 55%);
     pointer-events: none;
     opacity: 0.55;
-    transition: opacity 180ms ease;
+    transition: opacity 0.35s ease;
   }
 
-  .card:hover .photo-shade {
+  .team-card:hover .team-photoShade {
     opacity: 0.75;
   }
 
-  /* BODY — КОМПАКТНЕЕ */
-  .body {
-    padding: 16px 18px 18px;
+  /* BODY */
+  .team-body {
+    padding: 18px 20px 22px;
     display: flex;
     flex-direction: column;
-    gap: 6px; /* Меньше воздуха */
+    gap: 8px;
   }
 
-  .name {
-    font-size: 14px;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
+  .team-name {
+    font-size: 22px;
+    font-weight: 600;
     letter-spacing: -0.01em;
-    color: #0f172a;
+
+    background: linear-gradient(
+      135deg,
+      var(--accent-light),
+      var(--accent),
+      var(--accent-dark)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+
+    transition: transform 0.35s ease;
   }
 
-  .role {
+  .team-card:hover .team-name {
+    transform: translateX(3px);
+  }
+
+  .team-role {
     font-size: 12px;
-    font-weight: 800;
-    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    color: var(--text-muted);
   }
 
-  .bio {
-    font-size: 12.5px;
-    line-height: 1.45;
-    color: #64748b;
+  .team-bio {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-muted);
 
     display: -webkit-box;
-    -webkit-line-clamp: 2;   /* максимум 2 строки */
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  /* RESPONSIVE */
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .team-title {
+      font-size: 34px;
+    }
 
-  @media (max-width: 980px) {
-    .grid {
+    .team-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (max-width: 560px) {
+  @media (max-width: 720px) {
     .team {
-      padding: 60px 14px 80px;
+      padding: 80px 16px;
     }
 
     .team-title {
-      font-size: 24px;
-      letter-spacing: 0.08em;
+      font-size: 26px;
     }
 
-    .grid {
+    .team-card {
+      border-radius: 22px;
+    }
+
+    .team-grid {
       grid-template-columns: 1fr;
     }
 
-    .photo-wrap {
-      min-height: 300px;
+    .team-photoWrap {
+      min-height: 180px;
+    }
+
+    .team-name {
+      font-size: 18px;
     }
   }
 </style>
