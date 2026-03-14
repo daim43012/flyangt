@@ -5,10 +5,12 @@
   const BRAND = "FLYANGT";
 
   const nav = [
-    // { label: "Fleet", href: "/fleet" },
-    { label: "Tokenization", href: "/tokenization" },
+    { label: "Models", href: "/models" },
     { label: "Showroom", href: "/showroom" },
+    { label: "Configurator", href: "/configurator" },
     { label: "Vision", href: "/vision" },
+    { label: "Tokenization", href: "/tokenization" },
+    { label: "About", href: "/about" },
     { label: "Blog", href: "/blog" },
     { label: "Hub", href: "/app/dashboard" },
   ];
@@ -44,11 +46,12 @@
 </script>
 
 <header class="header">
-  <div class="glow"></div>
+  <div class="header-glow" aria-hidden="true"></div>
 
   <div class="container">
     <a href="/" class="logo" aria-label="Home">
-      {BRAND}
+      <span class="logo-mark">{BRAND}</span>
+      <span class="logo-tag">Aviation ecosystem</span>
     </a>
 
     <nav class="nav" aria-label="Primary">
@@ -59,9 +62,12 @@
           class:active={$page.url.pathname.startsWith(item.href)}
         >
           <span class="nav-label">{item.label}</span>
-          <span class="nav-underline"></span>
+          <span class="nav-underline" aria-hidden="true"></span>
         </a>
       {/each}
+
+      <div class="nav-divider" aria-hidden="true"></div>
+
       {#if $page.data?.user}
         <a class="user-pill" href="/app/dashboard" aria-label="Go to dashboard">
           <span class="avatar" aria-hidden="true">
@@ -73,7 +79,10 @@
           </span>
         </a>
       {:else}
-        <a class="login-btn" href="/login">Login</a>
+        <a class="login-btn" href="/login">
+          <span class="login-dot" aria-hidden="true"></span>
+          Login
+        </a>
       {/if}
     </nav>
 
@@ -89,161 +98,362 @@
       <span class:open={mobileOpen}></span>
     </button>
   </div>
-
-  {#if mobileOpen}
-    <div class="overlay" aria-hidden="false">
-      <button
-        class="backdrop"
-        type="button"
-        aria-label="Close menu"
-        on:click={closeMobile}
-      ></button>
-
-      <aside class="drawer" role="dialog" aria-label="Menu">
-        <div class="drawer-top">
-          <div class="drawer-title">Menu</div>
-          <button
-            class="close"
-            type="button"
-            aria-label="Close menu"
-            on:click={closeMobile}>✕</button
-          >
-        </div>
-
-        <nav class="drawer-links">
-          {#each nav as item}
-            <a
-              href={item.href}
-              class="drawer-link"
-              class:active={$page.url.pathname.startsWith(item.href)}
-              on:click={closeMobile}
-            >
-              {item.label}
-            </a>
-          {/each}
-        </nav>
-
-        <div class="drawer-hint">On-chain aircraft ownership experience.</div>
-      </aside>
-    </div>
-  {/if}
 </header>
 
+{#if mobileOpen}
+  <div class="overlay" aria-hidden="false">
+    <button
+      class="backdrop"
+      type="button"
+      aria-label="Close menu"
+      on:click={closeMobile}
+    ></button>
+
+    <aside class="drawer" role="dialog" aria-label="Menu">
+      <div class="drawer-top">
+        <div class="drawer-title">Menu</div>
+        <button
+          class="close"
+          type="button"
+          aria-label="Close menu"
+          on:click={closeMobile}
+        >
+          ✕
+        </button>
+      </div>
+
+      <nav class="drawer-links">
+        {#each nav as item}
+          <a
+            href={item.href}
+            class="drawer-link"
+            class:active={$page.url.pathname.startsWith(item.href)}
+            on:click={closeMobile}
+          >
+            <span>{item.label}</span>
+            <span class="drawer-chevron" aria-hidden="true">›</span>
+          </a>
+        {/each}
+
+        <div class="drawer-auth">
+          {#if $page.data?.user}
+            <a class="drawer-user" href="/app/dashboard" on:click={closeMobile}>
+              <span class="avatar" aria-hidden="true">
+                {String($page.data.user.email ?? "U").slice(0, 1)}
+              </span>
+              <span class="user-meta">
+                <span class="user-kicker">SIGNED IN</span>
+                <span class="user-email">{String($page.data.user.email)}</span>
+              </span>
+            </a>
+          {:else}
+            <a class="drawer-login" href="/login" on:click={closeMobile}
+              >Login</a
+            >
+          {/if}
+        </div>
+      </nav>
+
+      <div class="drawer-hint">
+        Structured access to aircraft, services, documentation, and
+        participation.
+      </div>
+    </aside>
+  </div>
+{/if}
+
 <style>
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  overflow: visible;
+  /* =========================
+   HEADER — premium smoked glass (brighter text + brighter pill borders)
+   ========================= */
 
-  /* glass */
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.82) 0%,
-      rgba(255, 255, 255, 0.62) 100%
-    ),
-    radial-gradient(
-      900px 220px at 30% 0%,
-      rgba(185, 226, 255, 0.28),
-      transparent 60%
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    overflow: visible;
+
+    background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.58) 0%,
+        rgba(15, 23, 42, 0.36) 100%
+      ),
+      radial-gradient(
+        900px 240px at 25% 0%,
+        rgba(56, 189, 248, 0.18),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 260px at 75% 0%,
+        rgba(37, 99, 235, 0.12),
+        transparent 62%
+      );
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 18px 60px rgba(2, 6, 23, 0.38);
+  }
+
+  .header-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    background: radial-gradient(
+        900px 240px at 25% 0%,
+        rgba(56, 189, 248, 0.18),
+        transparent 58%
+      ),
+      radial-gradient(
+        800px 240px at 75% 0%,
+        rgba(37, 99, 235, 0.14),
+        transparent 60%
+      );
+
+    filter: blur(16px);
+    opacity: 0.95;
+  }
+
+  .container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 24px;
+    min-height: 78px;
+
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  /* =========================
+   LOGO
+   ========================= */
+
+  .logo {
+    display: grid;
+    gap: 4px;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.98);
+  }
+
+  .logo-mark {
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.98);
+  }
+
+  .logo-tag {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.82);
+  }
+
+  /* =========================
+   NAV
+   ========================= */
+
+  .nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.16);
+    margin: 0 4px;
+  }
+
+  /* =========================
+   PILLS (nav + auth)
+   ========================= */
+
+  .nav-link,
+  .login-btn,
+  .user-pill {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(15, 23, 42, 0.3);
+
+    box-shadow:
+      0 22px 70px rgba(2, 6, 23, 0.25),
+      0 8px 22px rgba(2, 6, 23, 0.2);
+
+    transition:
+      transform 0.45s ease,
+      box-shadow 0.45s ease,
+      background 0.45s ease,
+      border-color 0.45s ease,
+      color 0.45s ease;
+  }
+
+  /* Nav link */
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+
+    padding: 10px 14px;
+    border-radius: 999px;
+    text-decoration: none;
+
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .nav-link:hover {
+    transform: translateY(-2px);
+    color: rgba(255, 255, 255, 0.98);
+
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.35);
+
+    box-shadow:
+      0 28px 90px rgba(2, 6, 23, 0.35),
+      0 10px 26px rgba(2, 6, 23, 0.25);
+  }
+
+  .nav-link.active {
+    transform: translateY(-1px);
+    color: #ffffff;
+
+    background: rgba(56, 189, 248, 0.25);
+    border-color: rgba(186, 230, 253, 0.35);
+
+    box-shadow:
+      0 30px 95px rgba(56, 189, 248, 0.28),
+      0 10px 30px rgba(2, 6, 23, 0.3);
+  }
+
+  /* underline */
+  .nav-underline {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 6px;
+
+    height: 2px;
+    border-radius: 999px;
+
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0),
+      rgba(186, 230, 253, 0.95),
+      rgba(255, 255, 255, 0)
     );
 
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+    transform: scaleX(0);
+    opacity: 0;
 
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
-}
+    transition:
+      transform 0.45s ease,
+      opacity 0.45s ease;
+  }
 
-.glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+  .nav-link:hover .nav-underline,
+  .nav-link.active .nav-underline {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 
-  background:
-    radial-gradient(
-      900px 240px at 25% 0%,
-      rgba(37, 99, 235, 0.18),
-      transparent 58%
-    ),
-    radial-gradient(
-      800px 240px at 75% 0%,
-      rgba(56, 189, 248, 0.14),
-      transparent 60%
-    );
+  /* =========================
+   LOGIN
+   ========================= */
 
-  filter: blur(10px);
-  opacity: 1;
-}
   .login-btn {
-    margin-left: 10px;
+    margin-left: 8px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+
+    padding: 10px 16px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: rgba(255, 255, 255, 0.88);
-    color: #0f172a;
+
+    color: #ffffff;
     text-decoration: none;
     font-size: 13px;
     font-weight: 900;
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
-    transition:
-      transform 0.18s ease,
-      box-shadow 0.18s ease,
-      background 0.18s ease;
   }
 
   .login-btn:hover {
-    transform: translateY(-1px);
-    background: rgba(37, 99, 235, 0.12);
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
+    transform: translateY(-2px);
+    background: rgba(56, 189, 248, 0.25);
+    border-color: rgba(186, 230, 253, 0.4);
   }
 
+  .login-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+
+    background: linear-gradient(
+      135deg,
+      rgba(56, 189, 248, 0.92),
+      rgba(37, 99, 235, 0.92)
+    );
+
+    box-shadow: 0 10px 22px rgba(56, 189, 248, 0.22);
+  }
+
+  /* =========================
+   USER
+   ========================= */
+
   .user-pill {
-    margin-left: 10px;
+    margin-left: 8px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
+
     padding: 8px 12px 8px 10px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: rgba(255, 255, 255, 0.88);
+
     text-decoration: none;
-    color: #0f172a;
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
-    transition:
-      transform 0.18s ease,
-      box-shadow 0.18s ease,
-      background 0.18s ease;
+    color: #ffffff;
     max-width: 320px;
   }
 
   .user-pill:hover {
-    transform: translateY(-1px);
-    background: rgba(37, 99, 235, 0.12);
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
+    transform: translateY(-2px);
+    background: rgba(56, 189, 248, 0.22);
+    border-color: rgba(186, 230, 253, 0.35);
+
+    box-shadow:
+      0 30px 95px rgba(56, 189, 248, 0.22),
+      0 10px 30px rgba(2, 6, 23, 0.3);
   }
 
   .avatar {
     width: 34px;
     height: 34px;
     border-radius: 999px;
+
     display: grid;
     place-items: center;
+
     font-weight: 900;
     font-size: 13px;
     letter-spacing: 0.02em;
-    color: #0f172a;
+
+    color: #ffffff;
+
     background: radial-gradient(
         10px 10px at 30% 30%,
-        rgba(255, 255, 255, 0.9),
+        rgba(255, 255, 255, 0.35),
         rgba(255, 255, 255, 0)
       ),
-      rgba(37, 99, 235, 0.16);
-    border: 1px solid rgba(37, 99, 235, 0.2);
+      rgba(56, 189, 248, 0.35);
+
+    border: 1px solid rgba(186, 230, 253, 0.35);
   }
 
   .user-meta {
@@ -254,135 +464,72 @@
 
   .user-kicker {
     font-size: 10px;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #64748b;
     font-weight: 900;
+    color: rgba(226, 232, 240, 0.82);
   }
 
   .user-email {
     font-size: 12px;
-    color: #0f172a;
     font-weight: 900;
+    color: #ffffff;
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .container {
-    position: relative;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 22px 24px;
-    min-height: 78px;
-    display: flex;
-    align-items: center;
-    gap: 28px;
-  }
+  /* =========================
+   BURGER
+   ========================= */
 
-  .logo {
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    font-size: 14px;
-    text-transform: uppercase;
-    font-style: italic;
-    color: #0f172a;
-    text-decoration: none;
-  }
-
-  .nav {
-    display: flex;
-    gap: 10px;
-    margin-left: auto;
-    align-items: center;
-  }
-
-  .nav-link {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    padding: 10px 12px;
-    border-radius: 999px;
-    text-decoration: none;
-    color: #475569;
-    font-size: 13px;
-    transition:
-      transform 0.18s ease,
-      background 0.18s ease,
-      color 0.18s ease,
-      box-shadow 0.18s ease;
-  }
-
-  .nav-underline {
-    position: absolute;
-    left: 14px;
-    right: 14px;
-    bottom: 7px;
-    height: 2px;
-    border-radius: 999px;
-    background: linear-gradient(
-      90deg,
-      rgba(37, 99, 235, 0),
-      rgba(37, 99, 235, 0.85),
-      rgba(79, 70, 229, 0)
-    );
-    transform: scaleX(0);
-    opacity: 0;
-    transition:
-      transform 0.22s ease,
-      opacity 0.22s ease;
-  }
-
-  .nav-link:hover {
-    color: #0f172a;
-    background: rgba(255, 255, 255, 0.85);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-    transform: translateY(-1px);
-  }
-
-  .nav-link:hover .nav-underline {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-
-  .nav-link.active {
-    color: #0f172a;
-    background: rgba(37, 99, 235, 0.14);
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
-  }
-
-  .nav-link.active .nav-underline {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-
-  /* Burger */
   .burger {
     display: none;
     margin-left: auto;
+
     width: 44px;
     height: 44px;
-    border-radius: 12px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #fff; /* ✅ непрозрачный */
+    border-radius: 14px;
+
+    border: 1px solid var(--border-soft);
+    background: var(--bg-white);
+
     cursor: pointer;
     position: relative;
     padding: 0;
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+
+    box-shadow:
+      0 8px 22px rgba(18, 20, 22, 0.08),
+      0 2px 8px rgba(18, 20, 22, 0.05);
+
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+
+  .burger:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 50px rgba(18, 20, 22, 0.1),
+      0 6px 16px rgba(18, 20, 22, 0.07);
   }
 
   .burger span {
     position: absolute;
     left: 12px;
     right: 12px;
+
     height: 2px;
     border-radius: 999px;
-    background: #0f172a;
+    background: var(--text-main);
+
     transition:
-      transform 0.2s ease,
-      top 0.2s ease,
-      opacity 0.2s ease;
+      transform 0.22s ease,
+      top 0.22s ease,
+      opacity 0.22s ease;
   }
+
   .burger span:nth-child(1) {
     top: 15px;
   }
@@ -405,7 +552,10 @@
     transform: rotate(-45deg);
   }
 
-  /* Overlay */
+  /* =========================
+   OVERLAY + DRAWER
+   ========================= */
+
   .overlay {
     position: fixed;
     inset: 0;
@@ -415,36 +565,35 @@
   .backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(2, 6, 23, 0.62); /* ✅ темно */
-    /* ✅ blur только на фоне, но он не влияет на drawer */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(18, 20, 22, 0.32);
     border: none;
     width: 100%;
     height: 100%;
   }
 
-  /* Drawer — БЕТОН, никакого backdrop-filter */
   .drawer {
     position: absolute;
     top: 0;
     right: 0;
+
     height: 100%;
-    width: min(360px, 86vw);
+    width: 82vw;
+    max-width: 360px;
 
-    background: #ffffff !important; /* ✅ железно */
-    opacity: 1 !important; /* ✅ на всякий */
-    isolation: isolate; /* ✅ отдельный слой */
-    transform: translateZ(0); /* ✅ форс GPU слой */
-
-    border-left: 1px solid rgba(15, 23, 42, 0.12);
-    box-shadow: -24px 0 70px rgba(2, 6, 23, 0.35);
+    background: #ffffff;
+    border-left: 1px solid rgba(18, 20, 22, 0.08);
+    box-shadow: -20px 0 60px rgba(18, 20, 22, 0.14);
 
     padding: 16px;
     z-index: 1000;
-    animation: slideIn 0.18s ease;
+
+    animation: slideIn 0.25s ease;
+
     display: flex;
     flex-direction: column;
+
+    /* Скруглённый левый край — "карточный" вид */
+    border-radius: 24px 0 0 24px;
   }
 
   @keyframes slideIn {
@@ -463,26 +612,51 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+
     padding: 10px 4px 14px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    border-bottom: 1px solid var(--border-soft);
   }
 
   .drawer-title {
-    font-size: 12px;
-    letter-spacing: 0.12em;
+    font-size: 11px;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #64748b;
     font-weight: 900;
+    color: var(--text-muted);
   }
 
   .close {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: #ffffff; /* ✅ непрозрачный */
+
+    border: 1px solid var(--border-soft);
+    background: rgba(18, 20, 22, 0.03);
+    color: var(--text-muted);
+
     cursor: pointer;
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+
+    box-shadow:
+      0 8px 22px rgba(18, 20, 22, 0.06),
+      0 2px 8px rgba(18, 20, 22, 0.04);
+
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.35s ease,
+      background 0.35s ease,
+      border-color 0.35s ease,
+      color 0.35s ease;
+  }
+
+  .close:hover {
+    transform: translateY(-2px);
+    background: rgba(176, 141, 87, 0.08);
+    border-color: rgba(176, 141, 87, 0.28);
+    color: var(--accent-dark);
+
+    box-shadow:
+      0 18px 50px rgba(176, 141, 87, 0.12),
+      0 6px 16px rgba(18, 20, 22, 0.06);
   }
 
   .drawer-links {
@@ -492,29 +666,126 @@
   }
 
   .drawer-link {
-    padding: 13px 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: #f8fafc; /* ✅ плотный */
-    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 14px 16px;
+    border-radius: 18px;
+
+    border: 1px solid var(--border-soft);
+    background: rgba(18, 20, 22, 0.02);
+
+    color: var(--text-main);
     text-decoration: none;
-    font-weight: 900;
+
+    font-weight: 700;
     font-size: 14px;
+
+    box-shadow:
+      0 8px 22px rgba(18, 20, 22, 0.05),
+      0 2px 8px rgba(18, 20, 22, 0.03);
+
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.35s ease,
+      background 0.35s ease,
+      border-color 0.35s ease;
+  }
+
+  .drawer-link:hover {
+    transform: translateY(-2px);
+    background: rgba(176, 141, 87, 0.06);
+    border-color: rgba(176, 141, 87, 0.22);
+
+    box-shadow:
+      0 18px 50px rgba(176, 141, 87, 0.1),
+      0 6px 16px rgba(18, 20, 22, 0.06);
   }
 
   .drawer-link.active {
-    background: rgba(37, 99, 235, 0.14);
-    border-color: rgba(37, 99, 235, 0.24);
+    background: rgba(176, 141, 87, 0.1);
+    border-color: rgba(176, 141, 87, 0.3);
+    color: var(--accent-dark);
+  }
+
+  .drawer-chevron {
+    color: var(--text-muted);
+    font-size: 18px;
+    transform: translateY(-1px);
+  }
+
+  .drawer-auth {
+    padding-top: 6px;
+  }
+
+  .drawer-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 14px;
+    border-radius: 18px;
+
+    border: 1px solid var(--border-soft);
+    background: rgba(18, 20, 22, 0.02);
+
+    text-decoration: none;
+    color: var(--text-main);
+  }
+
+  .drawer-login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    padding: 13px 14px;
+    border-radius: 18px;
+
+    border: 1px solid rgba(122, 90, 45, 0.35);
+    background: linear-gradient(
+      135deg,
+      rgba(176, 141, 87, 0.95),
+      rgba(120, 86, 36, 0.92)
+    );
+
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+
+    box-shadow:
+      0 18px 46px rgba(176, 141, 87, 0.22),
+      0 8px 20px rgba(18, 20, 22, 0.08);
+
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+
+  .drawer-login:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 26px 70px rgba(176, 141, 87, 0.26),
+      0 10px 26px rgba(18, 20, 22, 0.1);
   }
 
   .drawer-hint {
     margin-top: auto;
     padding-top: 12px;
+
     font-size: 12px;
-    color: #64748b;
-    line-height: 1.4;
-    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    line-height: 1.55;
+
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-soft);
   }
+
+  /* =========================
+   RESPONSIVE
+   ========================= */
 
   @media (max-width: 860px) {
     .nav {
@@ -524,16 +795,26 @@
       display: inline-block;
     }
     .container {
-      padding: 18px 16px;
+      padding: 16px 16px;
       min-height: 72px;
     }
   }
 
+  /* =========================
+   REDUCED MOTION
+   ========================= */
+
   @media (prefers-reduced-motion: reduce) {
     .nav-link,
     .nav-underline,
+    .burger,
     .burger span,
-    .drawer {
+    .drawer,
+    .close,
+    .login-btn,
+    .user-pill,
+    .drawer-link,
+    .drawer-login {
       transition: none;
       animation: none;
     }
