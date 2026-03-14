@@ -201,9 +201,14 @@ model KrasavaUsers {
 }
 
 model Player {
-  id          String    @id @default(uuid())
-  firstName   String
-  lastName    String?
+  id String @id @default(uuid())
+
+  firstName String
+  lastName  String?
+
+  firstNameRu String?
+  lastNameRu  String?
+
   number      Int?
   position    Position?
   birthDate   DateTime
@@ -310,20 +315,28 @@ model CbcUser {
   ownedCommunities      Community[]            @relation("CommunityOwners")
   memberCommunities     Community[]            @relation("CommunityMembers")
   communityJoinRequests CommunityJoinRequest[]
+  speakerAt             EventSpeaker[]         @relation("EventSpeakers")
+  trustEvents           CbcTrustEvent[]
+  socialLedgerReceived  CbcSocialLedger[]      @relation("SocialRecipient")
+  socialLedgerGiven     CbcSocialLedger[]      @relation("SocialSource")
+  socialTotal           CbcSocialTotal?
+  brandFollows          BrandFollow[]          @relation("UserBrandFollows")
 }
 
 model CbcUserInfo {
   id   String   @id @default(cuid())
   user CbcUser? @relation("UserInfoRelation")
 
-  status         String    @default("Member")
+  status         String      @default("Member")
+  role           CbcUserRole @default(USER)
   bio            String?
   photo          String?
   dateOfBirth    DateTime?
   name           String?
   location       String?
   phoneNumber    String?
-  custodyAddress String?   @unique
+  custodyAddress String?     @unique
+  trustScore     Int         @default(0)
 }
 
 model CbcUserSetting {
@@ -347,6 +360,7 @@ model Event {
   latitude     Float?
   longitude    Float?
   agenda       Json?
+  isActive     Boolean  @default(true)
   chatId       String?  @unique
   chat         Chat?    @relation(fields: [chatId], references: [id])
   createdAt    DateTime @default(now())
@@ -356,6 +370,14 @@ model Event {
   organizerId   String?
   organizer     CbcUser?            @relation("UserEvents", fields: [organizerId], references: [id])
   registrations EventRegistration[]
+
+  communityId String?
+  community   Community? @relation("CommunityEvents", fields: [communityId], references: [id])
+  brandId     String?
+  brand       Brand?     @relation("BrandEvents", fields: [brandId], references: [id])
+
+  sponsors EventSponsor[]
+  speakers EventSpeaker[]
 }
 
 enum ByWho {
@@ -645,18 +667,28 @@ enum BrandType {
   COMPANY
 }
 
+enum CbcUserRole {
+  USER
+  PARTNER
+  RESIDENT
+  ADMIN
+}
+
 model Brand {
-  id         String            @id @default(cuid())
-  ownerId    String
-  owner      CbcUser           @relation("UserBrands", fields: [ownerId], references: [id])
-  status     RequestStatus     @default(PENDING)
-  type       BrandType         @default(COMPANY)
-  name       String
-  logoUrl    String?
-  website    String?
-  answers    Json
-  categories EventCategory[]   @relation("BrandCategories")
-  tags       BrandTagOnBrand[]
+  id           String            @id @default(cuid())
+  ownerId      String
+  owner        CbcUser           @relation("UserBrands", fields: [ownerId], references: [id])
+  status       RequestStatus     @default(PENDING)
+  type         BrandType         @default(COMPANY)
+  name         String
+  logoUrl      String?
+  website      String?
+  answers      Json
+  categories   EventCategory[]   @relation("BrandCategories")
+  tags         BrandTagOnBrand[]
+  events       Event[]           @relation("BrandEvents")
+  sponsorships EventSponsor[]
+  followers    BrandFollow[]     @relation("BrandFollowers")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -744,10 +776,11 @@ enum CbcTransactionType {
 }
 
 model Community {
-  id        String  @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
   logoUrl   String?
-  isPrivate Boolean @default(false)
+  isPrivate Boolean       @default(false)
+  status    RequestStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -757,9 +790,11 @@ model Community {
   members CbcUser[] @relation("CommunityMembers")
 
   joinRequests CommunityJoinRequest[]
+  events       Event[]                @relation("CommunityEvents")
 
   @@unique([name])
   @@index([isPrivate])
+  @@index([status])
 }
 
 model CommunityJoinRequest {
@@ -843,24 +878,27 @@ model Booking {
 }
 
 model FlyUsers {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String?
-  googleId  String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  phone     String?
-  country   String?
-  age       Int?
-  instagram String?
-  x         String?
-  telegram  String?
+  id               String     @id @default(cuid())
+  email            String     @unique
+  name             String?
+  password         String?
+  googleId         String?    @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  phone            String?
+  country          String?
+  age              Int?
+  instagram        String?
+  x                String?
+  telegram         String?
+  resetToken       String?    @unique
+  resetTokenExpiry DateTime?
+  referralCode     String     @unique
+  referredById     String?
+  referredBy       FlyUsers?  @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals        FlyUsers[] @relation("UserReferrals")
 
-  referralCode String     @unique
-  referredById String?
-  referredBy   FlyUsers?  @relation("UserReferrals", fields: [referredById], references: [id])
-  referrals    FlyUsers[] @relation("UserReferrals")
+  onboardingDone   Boolean    @default(false)
 
   wallet           WalletInfo?
   rewards          RewardLedger[]
@@ -1103,4 +1141,255 @@ model PresaleTotal {
   updatedAt        DateTime    @updatedAt
 
   @@index([walletId])
+}
+
+model LibertyUsers {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
+  surname  String?
+  password String?
+  googleId String? @unique
+  role     String  @default("USER")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  referralCode String?        @unique
+  referredById String?
+  referredBy   LibertyUsers?  @relation("LibertyReferrals", fields: [referredById], references: [id])
+  referrals    LibertyUsers[] @relation("LibertyReferrals")
+
+  ownedHubs       LibertyHub[]            @relation("HubOwners")
+  purchases       LibertyPurchase[]
+  hubApplications LibertyHubApplication[]
+
+  @@index([role])
+}
+
+model LibertyHub {
+  id          String  @id @default(cuid())
+  name        String
+  city        String
+  description String?
+  coverUrl    String?
+  socials     Json?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owners LibertyUsers[] @relation("HubOwners")
+  events LibertyEvent[]
+
+  @@index([city])
+  @@index([isActive])
+}
+
+model LibertyEvent {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+  agenda      String?
+
+  categoryId String?
+  category   LibertyEventCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  hubId String?
+  hub   LibertyHub? @relation(fields: [hubId], references: [id], onDelete: SetNull)
+
+  location String
+  lat      Float?
+  lng      Float?
+
+  startAt DateTime
+  endAt   DateTime?
+
+  coverUrl String?
+  price    Int     @default(0)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases LibertyPurchase[]
+
+  @@index([isActive, startAt])
+  @@index([categoryId])
+  @@index([hubId])
+}
+
+model LibertyEventCategory {
+  id   String @id @default(cuid())
+  name String @unique
+
+  events LibertyEvent[]
+}
+
+model LibertyPost {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  excerpt   String?
+  content   Json
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+enum LibertyPaymentProvider {
+  STRIPE
+  PAYPAL
+}
+
+model LibertyPurchase {
+  id String @id @default(cuid())
+
+  userId String
+  user   LibertyUsers @relation(fields: [userId], references: [id])
+
+  eventId String
+  event   LibertyEvent @relation(fields: [eventId], references: [id])
+
+  transactionId String?             @unique
+  transaction   LibertyTransaction? @relation(fields: [transactionId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+}
+
+model LibertyTransaction {
+  id String @id @default(cuid())
+
+  provider LibertyPaymentProvider
+  status   String                 @default("CREATED")
+
+  amount Float
+
+  providerPaymentId String?
+  providerData      Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchase LibertyPurchase?
+
+  @@index([provider, providerPaymentId])
+}
+
+model LibertyHubApplication {
+  id     String       @id @default(cuid())
+  userId String
+  user   LibertyUsers @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name       String
+  city       String
+  eventTypes Json
+  message    String?
+  status     String  @default("PENDING")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+model EventSponsor {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id])
+
+  name    String?
+  logoUrl String?
+
+  order Int @default(0)
+
+  @@unique([eventId, brandId])
+  @@index([eventId])
+}
+
+model EventSpeaker {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   CbcUser? @relation("EventSpeakers", fields: [userId], references: [id])
+
+  name     String?
+  email    String?
+  photoUrl String?
+  title    String?
+
+  order Int @default(0)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+}
+
+model CbcTrustEvent {
+  id     String  @id @default(cuid())
+  userId String
+  user   CbcUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  action String
+  points Int
+  note   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model CbcSocialLedger {
+  id          String  @id @default(cuid())
+  recipientId String
+  recipient   CbcUser @relation("SocialRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  sourceUserId String?
+  sourceUser   CbcUser? @relation("SocialSource", fields: [sourceUserId], references: [id])
+
+  action  String
+  points  Int
+  refId   String?
+  refType String?
+
+  createdAt DateTime @default(now())
+
+  @@index([recipientId, createdAt])
+  @@index([recipientId, action, refId])
+  @@index([sourceUserId, action, createdAt])
+}
+
+model CbcSocialTotal {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  user   CbcUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  total     Int      @default(0)
+  rank      String   @default("Explorer")
+  updatedAt DateTime @updatedAt
+}
+
+model BrandFollow {
+  id        String   @id @default(cuid())
+  userId    String
+  brandId   String
+  createdAt DateTime @default(now())
+
+  user  CbcUser @relation("UserBrandFollows", fields: [userId], references: [id])
+  brand Brand   @relation("BrandFollowers", fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brandId])
+  @@index([brandId])
 }
