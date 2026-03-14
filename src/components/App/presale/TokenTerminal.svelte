@@ -1,13 +1,15 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { wallet } from "$lib/wallet/wallet.store";
-  import { chainKey } from "$lib/wallet/chains";
+  import { chainKey, isPolygon } from "$lib/wallet/chains";
 
   import { ADDRESSES } from "$lib/web3/addresses";
   import { presaleState, presaleBuy } from "$lib/web3/presale";
   import { erc20Allowance, erc20Approve, erc20BalanceOf } from "$lib/web3/erc20";
+  import { clog } from "$lib/utils/clientLog";
+  import { pushAdvisorError } from "$lib/stores/advisor";
 
-  export let data: { week: number; price: number };
+  export let data: { week: number; price: number; user?: { walletId?: string | null } };
 
   type PayMethod = "stripe" | "crypto";
   type CryptoCurrency = "USDT" | "USDC";
@@ -142,10 +144,13 @@
         : Number(balUsdc6) / 1e6
       : Infinity;
 
+  // DB wallet check (required for Stripe)
+  $: hasDbWallet = !!data?.user?.walletId;
+
   // confirm conditions
   $: canConfirm =
     payMethod === "stripe"
-      ? payUsd > 0 && !loading
+      ? payUsd > 0 && hasDbWallet && !loading
       : pay6 > 0n &&
         onchainActive &&
         $wallet.status === "connected" &&
@@ -157,15 +162,28 @@
   };
 
   async function loadPresale() {
-    if (!$wallet.provider) return;
-    const st = await presaleState($wallet.provider, C.presale);
-    onchainActive = st.active;
-    onchainWeek = st.week;
-    onchainPriceMicro = st.priceMicro;
+    try {
+      if ($wallet.provider && isPolygon($wallet.chainId)) {
+        const st = await presaleState($wallet.provider, C.presale);
+        onchainActive = st.active;
+        onchainWeek = st.week;
+        onchainPriceMicro = st.priceMicro;
+        clog.info("presale", "loadPresale via wallet", { active: st.active, week: st.week, priceMicro: String(st.priceMicro) });
+      } else {
+        // No wallet or wrong chain — use SSR data from server
+        onchainWeek = data?.week ?? 0;
+        const p = Number(data?.price ?? 0);
+        onchainPriceMicro = BigInt(Math.round(p * 1e6));
+        onchainActive = true;
+        clog.info("presale", "loadPresale via SSR data", { week: onchainWeek, price: p });
+      }
+    } catch (e: any) {
+      clog.error("presale", "loadPresale error", { err: e?.message });
+    }
   }
 
   async function loadBalances() {
-    if (!$wallet.provider || !$wallet.address) return;
+    if (!$wallet.provider || !$wallet.address || !isPolygon($wallet.chainId)) return;
     const [u, c] = await Promise.all([
       erc20BalanceOf($wallet.provider, C.usdt, $wallet.address),
       erc20BalanceOf($wallet.provider, C.usdc, $wallet.address),
@@ -175,7 +193,7 @@
   }
 
   async function loadAllowanceOnly() {
-    if (!$wallet.provider || !$wallet.address) return;
+    if (!$wallet.provider || !$wallet.address || !isPolygon($wallet.chainId)) return;
 
     if (payMethod !== "crypto" || !onchainActive) {
       allowance6 = 0n;
@@ -186,11 +204,18 @@
     allowance6 = await erc20Allowance($wallet.provider, token, $wallet.address, C.presale);
   }
 
-  // main reactive loads (no duplicates)
-  $: if ($wallet.status === "connected") {
-    C?.presale;
-    loadPresale();
-    loadBalances();
+  // unified reactive load — dedup by key to avoid repeated calls
+  let _loadKey = "";
+  $: {
+    const _s = $wallet.status;
+    const _c = $wallet.chainId;
+    const _p = C?.presale;
+    const key = `${_s}|${_c}|${_p}`;
+    if (key !== _loadKey && _p) {
+      _loadKey = key;
+      loadPresale();
+      if (_s === "connected") loadBalances();
+    }
   }
 
   $: if ($wallet.status === "connected" && payMethod === "crypto") {
@@ -206,19 +231,25 @@
     loading = true;
     statusText = "Preparing transaction...";
 
+    clog.info("presale", "buy: start", { currency: cryptoCurrency, pay6: String(pay6), addr: $wallet.address });
+
     try {
       const token = cryptoCurrency === "USDT" ? C.usdt : C.usdc;
 
       const a = await erc20Allowance($wallet.provider, token, $wallet.address, C.presale);
 
       if (a < pay6) {
+        clog.info("presale", "buy: calling approve", { token: cryptoCurrency, allowance: String(a), need: String(pay6) });
         statusText = `Approve ${cryptoCurrency}...`;
         await erc20Approve($wallet.provider, token, C.presale, pay6);
+        clog.info("presale", "buy: approve done");
       }
 
+      clog.info("presale", "buy: calling presaleBuy");
       statusText = "Buying...";
       await presaleBuy($wallet.provider, C.presale, token, pay6);
 
+      clog.info("presale", "buy: success");
       payAmount = "";
       showResult("success", "Purchase successful");
 
@@ -226,7 +257,10 @@
       await loadBalances();
       await loadAllowanceOnly();
     } catch (e: any) {
-      showResult("error", e?.shortMessage ?? e?.message ?? "Transaction failed");
+      const msg = e?.shortMessage ?? e?.message ?? "Transaction failed";
+      clog.error("presale", "buy: error", { err: msg, code: e?.code });
+      showResult("error", msg);
+      pushAdvisorError(`Presale crypto purchase failed: ${msg}`);
     } finally {
       loading = false;
       statusText = null;
@@ -266,7 +300,9 @@
       window.location.href = checkoutUrl;
     } catch (e: any) {
       console.error("[stripe:onConfirmStripe] error:", e);
-      showResult("error", e?.message ?? "Stripe error");
+      const msg = e?.message ?? "Stripe error";
+      showResult("error", msg);
+      pushAdvisorError(`Stripe payment failed: ${msg}`);
     } finally {
       loading = false;
       statusText = null;
@@ -486,6 +522,8 @@
         {#if loading}
           <span class="btnSpin" aria-hidden="true"></span>
           <span>Processing...</span>
+        {:else if !hasDbWallet}
+          <span>Connect wallet first</span>
         {:else}
           <span>Confirm</span>
         {/if}
@@ -495,525 +533,522 @@
 </div>
 
 <style>
+.wrap {
+  position: relative;
+  background: var(--bg-white);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid var(--border-soft);
+  box-shadow:
+    0 30px 90px rgba(18, 20, 22, 0.08),
+    0 8px 22px rgba(18, 20, 22, 0.06);
+  align-items: start;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.resultInner {
+  position: relative;
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+}
+
+.resultInner::before {
+  content: none;
+}
+
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.logo {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--accent);
+}
+.logo svg {
+  width: 30px;
+  height: 30px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.methodRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.segmented {
+  position: relative;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-white);
+  box-shadow:
+    0 18px 60px rgba(18, 20, 22, 0.06),
+    0 6px 18px rgba(18, 20, 22, 0.04);
+  gap: 4px;
+}
+
+.segBtn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: 160ms ease;
+  user-select: none;
+}
+
+.segBtn.active {
+  background: rgba(176, 141, 87, 0.10);
+  border-color: rgba(176, 141, 87, 0.25);
+  color: var(--accent-dark);
+  box-shadow: 0 14px 30px rgba(18, 20, 22, 0.06);
+  transform: translateY(-1px);
+}
+
+.segBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.row2 {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.balance {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.balance b {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.payBox {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-soft);
+  box-shadow:
+    0 18px 60px rgba(18, 20, 22, 0.06),
+    0 6px 18px rgba(18, 20, 22, 0.04);
+  margin-bottom: 12px;
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-white);
+  padding: 0 12px;
+}
+
+.inputWrap input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+}
+
+.inputWrap input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+.inputWrap input:disabled {
+  opacity: 0.7;
+}
+
+.maxBtn {
+  height: 46px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-white);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: 160ms ease;
+}
+.maxBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(18, 20, 22, 0.08);
+}
+.maxBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.selectWrap {
+  position: relative;
+  height: 46px;
+  min-width: 110px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-white);
+  display: grid;
+  align-items: center;
+  padding: 0 38px 0 12px;
+  user-select: none;
+}
+
+.nativeSelect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  appearance: none;
+}
+.nativeSelect:disabled {
+  cursor: not-allowed;
+}
+
+.selectText {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-main);
+  pointer-events: none;
+}
+
+.chev {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.receiveBox {
+  position: relative;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid var(--border-soft);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.small {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.big {
+  margin-top: 6px;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  line-height: 1.05;
+}
+
+.sym {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.rate {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 6px;
+  white-space: nowrap;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+}
+
+.confirm {
+  position: relative;
+  height: 64px;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background: rgba(15, 23, 42, 0.02);
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: not-allowed;
+  box-shadow: 0 18px 40px rgba(18, 20, 22, 0.04);
+  transition: 160ms ease;
+}
+
+.confirm.ready {
+  background: rgba(176, 141, 87, 0.10);
+  border-color: rgba(176, 141, 87, 0.30);
+  color: var(--accent-dark);
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(18, 20, 22, 0.06);
+}
+.confirm.ready:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 48px rgba(176, 141, 87, 0.14);
+  border-color: rgba(176, 141, 87, 0.45);
+}
+
+/* Button spinner */
+.btnSpin {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 3px solid rgba(15, 23, 42, 0.14);
+  border-top-color: currentColor;
+  animation: spin 0.9s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== RESULT CARD ===== */
+
+.top {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+  padding: 6px 2px 2px;
+  z-index: 1;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.k {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pill {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+}
+
+.pill.ok {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: rgba(22, 101, 52, 0.95);
+}
+
+.pill.warn {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: rgba(146, 64, 14, 0.95);
+}
+
+.iconWrap {
+  margin: 8px auto 4px;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-soft);
+  box-shadow:
+    0 18px 60px rgba(18, 20, 22, 0.06),
+    0 6px 18px rgba(18, 20, 22, 0.04);
+  display: grid;
+  place-items: center;
+}
+
+.iconWrap.ok {
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.iconWrap.warn {
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  line-height: 1.15;
+}
+
+.sub {
+  margin: 0 auto;
+  max-width: 46ch;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+}
+
+.actions {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.btn {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-white);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 18px 60px rgba(18, 20, 22, 0.06),
+    0 6px 18px rgba(18, 20, 22, 0.04);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0px); }
+
+.btn.primary {
+  border-color: rgba(176, 141, 87, 0.30);
+}
+
+@media (max-width: 720px) {
   .wrap {
-    position: relative;
-    background: #fff;
+    padding: 16px;
     border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-    align-items: start;
-    transition: transform 0.12s ease, filter 0.12s ease;
-    overflow: hidden;
   }
-
-  .resultInner {
-    position: relative;
-    min-height: 320px;
-    display: grid;
-    place-items: center;
-  }
-
-  .resultInner::before {
-    content: "";
-    position: absolute;
-    inset: -20px;
-    background:
-      radial-gradient(1000px 360px at 18% 0%, rgba(37, 99, 235, 0.14), transparent 58%),
-      radial-gradient(900px 320px at 85% 35%, rgba(99, 102, 241, 0.12), transparent 62%);
-    pointer-events: none;
-  }
-
-  .brand {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .logo {
-    width: 30px;
-    height: 30px;
-    display: inline-grid;
-    place-items: center;
-    color: rgba(37, 99, 235, 0.95);
-  }
-  .logo svg {
-    width: 30px;
-    height: 30px;
-  }
-
-  .title {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    font-style: italic;
-    color: #0f172a;
-  }
-
-  .methodRow {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .segmented {
-    position: relative;
-    display: inline-flex;
-    padding: 4px;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(255, 255, 255, 0.75);
-    box-shadow:
-      0 16px 36px rgba(15, 23, 42, 0.06),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-    gap: 4px;
-  }
-
-  .segBtn {
-    height: 36px;
-    padding: 0 14px;
-    border-radius: 12px;
-    border: 1px solid transparent;
-    background: transparent;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.65);
-    cursor: pointer;
-    transition: 160ms ease;
-    user-select: none;
-  }
-
-  .segBtn.active {
-    background: rgba(37, 99, 235, 0.12);
-    border-color: rgba(37, 99, 235, 0.18);
-    color: rgba(37, 99, 235, 0.95);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
-    transform: translateY(-1px);
-  }
-
-  .segBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .row2 {
-    position: relative;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .label {
-    font-size: 13px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.7);
-  }
-
-  .balance {
-    font-size: 13px;
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.55);
-  }
-  .balance b {
-    color: rgba(15, 23, 42, 0.85);
-    font-weight: 950;
-  }
-
   .payBox {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 10px;
-    align-items: center;
-    padding: 12px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 16px 36px rgba(15, 23, 42, 0.06),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-    margin-bottom: 12px;
+    grid-template-columns: 1fr;
   }
-
-  .inputWrap {
-    display: flex;
-    align-items: center;
-    height: 46px;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(255, 255, 255, 0.9);
-    padding: 0 12px;
-  }
-
-  .inputWrap input {
-    width: 100%;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    font-size: 28px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    color: rgba(15, 23, 42, 0.85);
-  }
-
-  .inputWrap input::placeholder {
-    color: rgba(15, 23, 42, 0.28);
-  }
-
-  .inputWrap input:disabled {
-    opacity: 0.7;
-  }
-
+  .selectWrap,
   .maxBtn {
-    height: 46px;
-    padding: 0 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(255, 255, 255, 0.85);
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.75);
-    cursor: pointer;
-    transition: 160ms ease;
-  }
-  .maxBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
-  }
-  .maxBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-
-  .selectWrap {
-    position: relative;
-    height: 46px;
-    min-width: 110px;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(255, 255, 255, 0.9);
-    display: grid;
-    align-items: center;
-    padding: 0 38px 0 12px;
-    user-select: none;
-  }
-
-  .nativeSelect {
-    position: absolute;
-    inset: 0;
     width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    appearance: none;
+    min-width: unset;
   }
-  .nativeSelect:disabled {
-    cursor: not-allowed;
-  }
-
-  .selectText {
-    font-size: 14px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.85);
-    pointer-events: none;
-  }
-
-  .chev {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    color: rgba(15, 23, 42, 0.55);
-    pointer-events: none;
-  }
-
   .receiveBox {
-    position: relative;
-    padding: 14px;
-    border-radius: 16px;
-    background: rgba(248, 250, 252, 0.75);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    align-items: end;
-    margin-bottom: 14px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
-
-  .small {
-    font-size: 11px;
-    font-weight: 950;
-    letter-spacing: 0.06em;
-    color: rgba(15, 23, 42, 0.55);
-  }
-
-  .big {
-    margin-top: 6px;
-    font-size: 28px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    color: rgba(15, 23, 42, 0.9);
-    line-height: 1.05;
-  }
-
-  .sym {
-    font-size: 18px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(37, 99, 235, 0.95);
-  }
-
   .rate {
-    font-size: 14px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.75);
-    text-align: right;
-    margin-top: 6px;
-    white-space: nowrap;
+    text-align: left;
   }
-
-  .hint {
-    margin-top: 8px;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: -0.01em;
-    color: rgba(15, 23, 42, 0.55);
+  .methodRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
-
-  .confirm {
-    position: relative;
-    height: 64px;
+  .segmented {
     width: 100%;
-    border-radius: 18px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(15, 23, 42, 0.06);
-    color: rgba(15, 23, 42, 0.42);
-    font-size: 16px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    cursor: not-allowed;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.04);
-    transition: 160ms ease;
+    justify-content: space-between;
   }
-
-  .confirm.ready {
-    background: rgba(37, 99, 235, 0.12);
-    border-color: rgba(37, 99, 235, 0.18);
-    color: rgba(37, 99, 235, 0.95);
-    cursor: pointer;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  .segBtn {
+    width: 100%;
   }
-  .confirm.ready:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.08);
-  }
-
-  /* Button spinner (no fixed colors, inherits currentColor) */
-  .btnSpin {
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    border: 3px solid rgba(15, 23, 42, 0.14);
-    border-top-color: currentColor;
-    animation: spin 0.9s linear infinite;
-    flex: 0 0 auto;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* ===== RESULT CARD (INSIDE THE SAME WRAP) ===== */
-
-  .top {
-    position: relative;
-    display: grid;
-    gap: 10px;
-    text-align: center;
-    padding: 6px 2px 2px;
-    z-index: 1;
-  }
-
-  .badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .k {
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.7);
-  }
-
-  .pill {
-    height: 26px;
-    padding: 0 12px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    color: rgba(15, 23, 42, 0.85);
-  }
-
-  .pill.ok {
-    border-color: rgba(34, 197, 94, 0.35);
-    color: rgba(22, 101, 52, 0.95);
-    box-shadow: 0 10px 24px rgba(34, 197, 94, 0.12);
-  }
-
-  .pill.warn {
-    border-color: rgba(245, 158, 11, 0.35);
-    color: rgba(146, 64, 14, 0.95);
-    box-shadow: 0 10px 24px rgba(245, 158, 11, 0.12);
-  }
-
-  .iconWrap {
-    margin: 8px auto 4px;
-    width: 54px;
-    height: 54px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    box-shadow:
-      0 16px 36px rgba(15, 23, 42, 0.06),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-    display: grid;
-    place-items: center;
-  }
-
-  .iconWrap.ok {
-    border-color: rgba(34, 197, 94, 0.25);
-  }
-
-  .iconWrap.warn {
-    border-color: rgba(245, 158, 11, 0.30);
-  }
-
-  .icon {
-    font-size: 26px;
-    line-height: 1;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-    line-height: 1.15;
-  }
-
-  .sub {
-    margin: 0 auto;
-    max-width: 46ch;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: rgba(15, 23, 42, 0.65);
-  }
-
-  .actions {
-    position: relative;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 16px;
-  }
-
-  .btn {
-    height: 42px;
-    padding: 0 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: rgba(255, 255, 255, 0.9);
-    color: rgba(15, 23, 42, 0.9);
-    font-size: 13px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
-    cursor: pointer;
-    box-shadow:
-      0 16px 36px rgba(15, 23, 42, 0.06),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-    transition: transform 0.12s ease, filter 0.12s ease;
-  }
-
-  .btn:hover {
-    transform: translateY(-1px);
-  }
-  .btn:active {
-    transform: translateY(0px);
-  }
-
-  .btn.primary {
-    border-color: rgba(59, 130, 246, 0.26);
-  }
-
-  @media (max-width: 720px) {
-    .wrap {
-      padding: 16px;
-      border-radius: 20px;
-    }
-    .payBox {
-      grid-template-columns: 1fr;
-    }
-    .selectWrap,
-    .maxBtn {
-      width: 100%;
-      min-width: unset;
-    }
-    .receiveBox {
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-    .rate {
-      text-align: left;
-    }
-    .methodRow {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 10px;
-    }
-    .segmented {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .segBtn {
-      width: 100%;
-    }
-  }
+}
 </style>
