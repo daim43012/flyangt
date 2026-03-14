@@ -4,7 +4,7 @@ import { verifyJwt } from "$lib/jwt";
 
 const TASK_KEY = "ig_code";
 const TASK_TITLE = "Instagram code";
-const AMOUNT = 15;
+const AMOUNT = 50;
 
 function normalizeCode(v: string) {
   return v.trim().toUpperCase().replace(/\s+/g, "");
