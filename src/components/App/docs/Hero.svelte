@@ -34,64 +34,67 @@
 
 <style>
   .heroCard{
-    border-radius: 26px;
+    border-radius: 20px;
     padding: 22px 22px 18px;
     overflow: hidden;
     position: relative;
 
-    background: linear-gradient(135deg, rgba(79, 70, 229, 1), rgba(147, 51, 234, 1));
-    box-shadow: 0 26px 70px rgba(79, 70, 229, 0.28);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+      0 30px 90px rgba(18, 20, 22, 0.08),
+      0 8px 22px rgba(18, 20, 22, 0.06);
     min-height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 14px;                
+    gap: 14px;
   }
 
   .heroCard::before{
-    content:"";
-    position:absolute;
-    inset:0;
+    content: "";
+    position: absolute;
+    inset: 0;
     background:
-      radial-gradient(900px 360px at 20% 10%, rgba(255, 255, 255, 0.22), transparent 55%),
-      radial-gradient(800px 320px at 90% 40%, rgba(255, 255, 255, 0.14), transparent 60%);
-    pointer-events:none;
+      radial-gradient(900px 360px at 20% 10%, rgba(176, 141, 87, 0.1), transparent 55%),
+      radial-gradient(800px 320px at 90% 40%, rgba(122, 90, 45, 0.06), transparent 60%);
+    pointer-events: none;
   }
 
   .heroTop{ position:relative; z-index:1; }
   .heroText{ position:relative; z-index:1; max-width:760px; }
-  .heroSearch{ position:relative; z-index:1; margin-top: 6px; } /* поиск ниже текста */
+  .heroSearch{ position:relative; z-index:1; margin-top: 6px; }
 
   .heroPill{
     height: 28px;
     padding: 0 12px;
     border-radius: 999px;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: -0.02em;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.92);
-    background: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(10px);
+    color: var(--accent-dark);
+    background: rgba(176, 141, 87, 0.08);
+    border: 1px solid rgba(176, 141, 87, 0.22);
   }
 
   .heroTitle{
     margin: 0;
     font-size: 44px;
     line-height: 1.05;
-    font-weight: 950;
+    font-weight: 600;
+    font-family: var(--font-heading);
     letter-spacing: -0.04em;
-    color: #fff;
+    color: var(--text-main);
   }
 
   .heroSubtitle{
     margin: 10px 0 0;
     font-size: 16px;
     line-height: 1.55;
-    color: rgba(255, 255, 255, 0.86);
+    color: var(--text-muted);
     max-width: 720px;
   }
 
@@ -103,9 +106,8 @@
     gap: 10px;
     align-items: center;
 
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    backdrop-filter: blur(12px);
+    background: rgba(176, 141, 87, 0.06);
+    border: 1px solid rgba(176, 141, 87, 0.22);
   }
 
   .heroSearchIcon{
@@ -114,20 +116,20 @@
     border-radius: 10px;
     display: grid;
     place-items: center;
-    color: rgba(255, 255, 255, 0.95);
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: var(--accent-dark);
+    background: rgba(176, 141, 87, 0.1);
+    border: 1px solid rgba(176, 141, 87, 0.22);
   }
 
   .heroSearchInput{
     width: 100%;
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-main);
     background: transparent;
     border: 0;
     outline: none;
   }
-  .heroSearchInput::placeholder{ color: rgba(255, 255, 255, 0.70); }
+  .heroSearchInput::placeholder{ color: var(--text-muted); }
 
   .heroArt{
     position: absolute;
@@ -136,9 +138,8 @@
     width: 520px;
     height: 340px;
     border-radius: 90px;
-    background: rgba(255,255,255,0.10);
+    background: rgba(176, 141, 87, 0.06);
     transform: rotate(-18deg);
-    opacity: 0.9;
     pointer-events: none;
   }
 </style>
