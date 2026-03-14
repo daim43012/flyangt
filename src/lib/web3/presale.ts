@@ -3,6 +3,7 @@ import { Contract, Interface, getAddress, id, zeroPadValue } from "ethers";
 import type { Eip1193Provider } from "$lib/wallet/provider";
 import { getBrowserProvider, getSigner } from "./ethers";
 import { PRESALE_ABI } from "./abi/presale.abi";
+import { ADDRESSES } from "./addresses";
 
 export type PresalePurchaseEvent = {
   txHash: string;
@@ -78,6 +79,56 @@ export async function presaleRoadmap(
   return { currentWeek, prices };
 }
 
+const ETHERSCAN_V2_API = "https://api.etherscan.io/v2/api";
+
+/**
+ * Server-side: get total USD spent by a wallet via Etherscan logs API
+ * (works on free Alchemy tier, no block range limits)
+ */
+export async function getOnchainTotalUsd(walletAddress: string): Promise<number> {
+  try {
+    const iface = new Interface(PRESALE_ABI as any);
+    const topic0 = id("Purchased(address,address,uint256,uint256,uint256,uint256)");
+    const buyerTopic = zeroPadValue(getAddress(walletAddress), 32);
+    const fromBlock = ADDRESSES.polygon.presaleFromBlock;
+
+    const apiKey = process.env.ETHERSCAN_API_KEY?.trim() || "";
+    const params = new URLSearchParams({
+      chainid: "137",
+      module: "logs",
+      action: "getLogs",
+      address: ADDRESSES.polygon.presale,
+      topic0,
+      topic1: buyerTopic,
+      topic0_1_opr: "and",
+      fromBlock: String(fromBlock),
+      toBlock: "latest",
+      ...(apiKey ? { apikey: apiKey } : {}),
+    });
+
+    const res = await fetch(`${ETHERSCAN_V2_API}?${params}`);
+    const body = await res.json();
+
+    if (body.status !== "1" || !Array.isArray(body.result)) {
+      if (body.message === "No records found") return 0;
+      console.error("[presale] etherscan user logs:", JSON.stringify(body));
+      return 0;
+    }
+
+    let totalPay6 = 0n;
+    for (const log of body.result) {
+      const parsed = iface.parseLog({ topics: log.topics, data: log.data });
+      if (!parsed) continue;
+      totalPay6 += BigInt(parsed.args.payAmount);
+    }
+
+    return Number(totalPay6) / 1e6;
+  } catch (e: any) {
+    console.error("[presale] onchain user total error:", e?.message ?? e);
+    return 0;
+  }
+}
+
 export async function presaleUserPurchases(
   provider: Eip1193Provider,
   presale: string,
@@ -95,12 +146,16 @@ export async function presaleUserPurchases(
   const buyerChecksum = getAddress(buyer);
   const buyerTopic = zeroPadValue(buyerChecksum, 32);
 
-  const logs = await bp.getLogs({
+  const rawLogs = await bp.getLogs({
     address: presale,
     fromBlock: fromBlock ?? 0,
     toBlock: "latest",
     topics: [topic0, buyerTopic],
   });
+
+  // Filter out pending/reorg'd logs that have null transactionHash, blockHash, or blockNumber
+  // (these cause ethers "could not coalesce" errors when parsing)
+  const logs = rawLogs.filter((l) => l.transactionHash && l.blockHash && l.blockNumber);
 
   const items: PresalePurchaseEvent[] = [];
 
